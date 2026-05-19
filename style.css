@@ -108,6 +108,8 @@ body {
     aspect-ratio: 6 / 7;
     will-change: transform, filter;
     transform: translate3d(0, 0, 0); /* Force GPU layer rendering */
+    -webkit-tap-highlight-color: transparent; /* Remove blue tap highlight on mobile */
+    outline: none;
 }
 
 .envelope-container:hover {
@@ -344,6 +346,8 @@ body {
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25), 0 2px 8px rgba(0, 0, 0, 0.15); /* Rich floating shadow */
     position: relative;
     overflow: hidden;
+    -webkit-tap-highlight-color: transparent; /* Remove blue tap highlight on mobile */
+    outline: none;
 }
 
 /* Glass Blue Shine Animation */
