@@ -99,4 +99,45 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Event listener for click
     envelopeContainer.addEventListener('click', openEnvelope);
+    
+    // Countdown Timer Logic
+    function initializeCountdown() {
+        // Target Date: June 1, 2026, 00:00:00 Bangladesh Time (UTC+6)
+        const targetDate = new Date('2026-06-01T00:00:00+06:00').getTime();
+        
+        const daysEl = document.getElementById('countdown-days');
+        const hoursEl = document.getElementById('countdown-hours');
+        const minutesEl = document.getElementById('countdown-minutes');
+        const secondsEl = document.getElementById('countdown-seconds');
+
+        if (!daysEl) return; // Guard clause
+
+        function updateTimer() {
+            const now = new Date().getTime();
+            const distance = targetDate - now;
+
+            if (distance <= 0) {
+                daysEl.innerText = "00";
+                hoursEl.innerText = "00";
+                minutesEl.innerText = "00";
+                secondsEl.innerText = "00";
+                return;
+            }
+
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            daysEl.innerText = days.toString().padStart(2, '0');
+            hoursEl.innerText = hours.toString().padStart(2, '0');
+            minutesEl.innerText = minutes.toString().padStart(2, '0');
+            secondsEl.innerText = seconds.toString().padStart(2, '0');
+        }
+
+        updateTimer();
+        setInterval(updateTimer, 1000);
+    }
+    
+    initializeCountdown();
 });

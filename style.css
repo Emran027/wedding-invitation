@@ -227,6 +227,31 @@ body {
     font-weight: bold;
 }
 
+.countdown-timer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    margin-bottom: 0.6rem;
+}
+
+.time-unit {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    font-family: var(--font-heading);
+}
+
+.time-unit small {
+    font-size: 0.5rem;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    letter-spacing: 1px;
+    font-family: var(--font-body);
+}
+
 .card-line {
     width: 45px;
     height: 1px;
@@ -296,7 +321,7 @@ body {
     .elegant-title {
         font-size: 2.2rem;
     }
-    .envelope-img, .envelope-composed {
+    .envelope-container {
         max-width: 90%;
         margin: 0 auto;
     }
