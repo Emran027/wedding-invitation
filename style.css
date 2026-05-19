@@ -39,22 +39,30 @@ body {
     background-repeat: no-repeat;
     z-index: -1;
     pointer-events: none;
+    transition: filter 1.2s ease-in-out, transform 1.2s ease-in-out;
+}
+
+.ambient-background.blurred {
+    filter: blur(2px) brightness(0.9);
 }
 
 .app-container {
     width: 100%;
     max-width: 800px;
-    padding: 2rem;
+    min-height: 100vh;
+    padding: 2rem 1.5rem;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    box-sizing: border-box;
+    gap: 0.5rem; /* Force title header and envelope to sit closely */
 }
 
 /* Header Styles */
 .text-header {
     text-align: center;
-    margin-bottom: 3rem;
+    margin-bottom: 0.8rem;
     opacity: 0;
     animation: fadeInDown 1.5s ease 0.5s forwards;
 }
@@ -64,7 +72,7 @@ body {
     font-size: 3.5rem;
     font-weight: 400;
     letter-spacing: 2px;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.2rem;
     color: var(--text-primary);
 }
 
@@ -75,35 +83,46 @@ body {
     color: var(--text-secondary);
 }
 
-/* Envelope Container */
+/* Envelope Container Wrapper */
 .envelope-section {
     display: flex;
     justify-content: center;
     align-items: center;
     width: 100%;
-    margin-bottom: 2rem;
+    margin-bottom: 0;
 }
 
 .envelope-container {
     position: relative;
     cursor: pointer;
-    transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
-    /* Subtle drop shadow for the envelope to make it feel tangible */
+    transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.8s ease, filter 0.8s ease;
     filter: drop-shadow(0 15px 30px rgba(0,0,0,0.15));
     
-    /* Enforce size so container doesn't collapse when the image is hidden */
     width: 100%;
-    max-width: 450px;
+    max-width: 450px; /* Restored original full envelope size */
     aspect-ratio: 6 / 7;
 }
 
 .envelope-container:hover {
     transform: scale(1.03) translateY(-5px);
+    filter: drop-shadow(0 20px 35px rgba(0,0,0,0.2));
 }
 
 .envelope-container.animating {
-    pointer-events: none; /* Prevent clicks while animating */
-    transform: scale(1);
+    pointer-events: none;
+    transform: scale(1) translateY(0);
+}
+
+.envelope-container.moved-up {
+    transform: translateY(-80px) scale(1); /* Move up by fixed distance to make space for button */
+    filter: drop-shadow(0 25px 50px rgba(0,0,0,0.35));
+}
+
+.envelope-container.fly-away {
+    transform: translateY(-120vh) scale(1.1); /* Fly way up and out of view */
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 1.2s cubic-bezier(0.5, 0, 0.1, 1), opacity 1s ease;
 }
 
 .envelope-img {
@@ -132,8 +151,20 @@ body {
     pointer-events: none;
 }
 
-.envelope-layer.flap {
+.envelope-layer.back {
     z-index: 1;
+}
+
+.envelope-pocket-bg {
+    position: absolute;
+    width: 90%;
+    height: 52%;
+    bottom: 4%;
+    left: 5%;
+    background-color: #260408; /* Dark blackish red lining color */
+    z-index: 1.5; /* Behind card (z-index 2) but in front of back (z-index 1) */
+    border-radius: 0 0 16px 16px;
+    box-shadow: inset 0 10px 20px rgba(0, 0, 0, 0.4); /* Give a sense of deep pocket depth */
 }
 
 .envelope-layer.body {
@@ -162,7 +193,7 @@ body {
 
 .envelope-composed.open .invitation-card {
     /* Slide out of pocket, moving up and scaling up */
-    transform: translateY(-44%) scale(1.02);
+    transform: translateY(-56%) scale(1.02);
     opacity: 1;
 }
 
@@ -268,36 +299,80 @@ body {
 
 /* Invitation Details (Hidden Initially) */
 .invitation-details {
+    position: absolute;
+    bottom: -3.8rem; /* Position slightly closer since button is smaller */
+    left: 50%;
+    transform: translateX(-50%) translateY(15px);
+    width: 100%;
     text-align: center;
+    z-index: 10;
     opacity: 0;
-    transform: translateY(20px);
     transition: opacity 1s ease, transform 1s ease;
-    margin-top: 1rem;
+    pointer-events: none;
 }
 
 .invitation-details.visible {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateX(-50%) translateY(0);
+    pointer-events: auto;
 }
 
+/* Glassmorphism Button with Golden Border and Blue Shine */
 .cta-button {
-    background-color: var(--text-primary);
-    color: white;
-    border: none;
-    padding: 0.9rem 2.2rem;
-    font-family: var(--font-body);
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: var(--text-primary);
+    border: 1px solid var(--accent-color);
+    padding: 0.55rem 1.6rem; /* Smaller padding for sleeker button */
+    font-family: var(--font-heading);
     text-transform: uppercase;
-    letter-spacing: 2px;
-    font-size: 0.8rem;
+    letter-spacing: 2px; /* Adjusted spacing */
+    font-size: 0.8rem; /* Smaller font size */
+    font-weight: 600;
     cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.2s ease;
-    border-radius: 4px;
-    box-shadow: 0 4px 15px rgba(44, 62, 46, 0.15);
+    transition: all 0.3s ease;
+    border-radius: 30px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Glass Blue Shine Animation */
+.cta-button::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -150%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(
+        to right,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(0, 191, 255, 0.4) 50%,
+        rgba(255, 255, 255, 0) 100%
+    );
+    transform: skewX(-25deg);
+    animation: button-shine 3s infinite ease-in-out;
+}
+
+@keyframes button-shine {
+    0% {
+        left: -150%;
+    }
+    50% {
+        left: 150%;
+    }
+    100% {
+        left: 150%;
+    }
 }
 
 .cta-button:hover {
-    background-color: #1a251b;
+    background: rgba(255, 255, 255, 0.25);
     transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1), 0 0 10px rgba(0, 191, 255, 0.3);
+    border-color: #b8a28f;
 }
 
 .hidden {
@@ -318,35 +393,60 @@ body {
 
 /* Responsive */
 @media (max-width: 600px) {
+    .text-header {
+        margin-top: 0;
+        margin-bottom: 0;
+    }
     .elegant-title {
         font-size: 2.2rem;
     }
     .envelope-container {
-        max-width: 90%;
+        max-width: 90%; /* Restore original mobile envelope size */
         margin: 0 auto;
     }
     .invitation-card {
-        padding: 0.8rem;
-        width: 78%;
-        left: 11%;
+        padding: 0.5rem;
+        height: 72%; /* Increase card height slightly on mobile to prevent text overflow */
+        /* Removed width: 78% and left: 11% so card is locked to envelope pocket structure (width: 88%, left: 6%) */
     }
     .card-inner {
-        padding: 1rem 0.5rem;
+        padding: 0.6rem 0.3rem;
     }
-    .card-names {
-        font-size: 1.6rem;
+    .card-tag {
+        font-size: 0.55rem;
+        margin-bottom: 0.2rem;
     }
     .card-monogram {
-        width: 36px;
-        height: 36px;
-        font-size: 1.1rem;
-        margin-bottom: 0.6rem;
+        width: 30px;
+        height: 30px;
+        font-size: 0.9rem;
+        margin-bottom: 0.3rem;
+    }
+    .card-names {
+        font-size: 1.4rem;
+        margin-bottom: 0.2rem;
+    }
+    .card-date-box {
+        font-size: 0.8rem;
+        margin-bottom: 0.3rem;
+        gap: 0.2rem;
+    }
+    .countdown-timer {
+        margin-bottom: 0.3rem;
+        gap: 0.3rem;
+    }
+    .time-unit {
+        font-size: 0.7rem;
+    }
+    .card-line {
+        margin-bottom: 0.2rem;
+        width: 30px;
     }
     .card-venue {
-        font-size: 0.65rem;
+        font-size: 0.6rem;
     }
     .envelope-composed.open .invitation-card {
-        transform: translateY(-56%) scale(1.02);
+        transform: translateY(-74%) scale(1.02); /* Slide up significantly higher on mobile to fully reveal card text above pocket V */
     }
     
     /* Mobile specific background */

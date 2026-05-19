@@ -7,8 +7,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const envelopeImg = document.getElementById('envelope-img');
     const envelopeContainer = document.getElementById('envelope-container');
     const envelopeComposed = document.getElementById('envelope-composed');
+    const headerTitle = document.querySelector('.elegant-title');
     const headerSubtitle = document.querySelector('.elegant-subtitle');
     const invitationDetails = document.getElementById('invitation-details');
+    const ctaButton = document.querySelector('.cta-button');
     
     // Array to hold preloaded images
     const preloadedImages = [];
@@ -52,7 +54,11 @@ document.addEventListener('DOMContentLoaded', () => {
         
         let currentFrame = 1;
         
-        // Hide the subtitle smoothly
+        // Hide the title and subtitle smoothly
+        if (headerTitle) {
+            headerTitle.style.transition = 'opacity 0.5s ease';
+            headerTitle.style.opacity = '0';
+        }
         if (headerSubtitle) {
             headerSubtitle.style.transition = 'opacity 0.5s ease';
             headerSubtitle.style.opacity = '0';
@@ -74,6 +80,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Small delay to trigger the CSS transition for sliding the card up
                 setTimeout(() => {
                     envelopeComposed.classList.add('open');
+                    envelopeContainer.classList.add('moved-up'); // Move container up slightly
+                    
+                    // Blur the ambient background
+                    const ambientBg = document.querySelector('.ambient-background');
+                    if (ambientBg) {
+                        ambientBg.classList.add('blurred');
+                    }
+                    
                     isAnimating = false;
                     isOpen = true;
                     
@@ -94,11 +108,34 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // 4. Fly away when details button clicked
+    function flyAwayDetails() {
+        if (!isOpen) return;
+        envelopeContainer.classList.add('fly-away');
+        
+        // Remove background blur as everything flies away
+        const ambientBg = document.querySelector('.ambient-background');
+        if (ambientBg) {
+            ambientBg.classList.remove('blurred');
+        }
+
+        if (invitationDetails) {
+            invitationDetails.style.transition = 'opacity 0.5s ease';
+            invitationDetails.style.opacity = '0';
+            setTimeout(() => {
+                invitationDetails.classList.add('hidden');
+            }, 500);
+        }
+    }
+
     // Initialize
     preloadImages();
     
     // Event listener for click
     envelopeContainer.addEventListener('click', openEnvelope);
+    if (ctaButton) {
+        ctaButton.addEventListener('click', flyAwayDetails);
+    }
     
     // Countdown Timer Logic
     function initializeCountdown() {

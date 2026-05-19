@@ -55,15 +55,21 @@
                         </div>
                     </div>
                     
+                    <!-- Envelope Back (z-index 1) -->
+                    <img class="envelope-layer back" src="assets/8.png" alt="Envelope Back">
+                    
+                    <!-- Envelope Pocket Inner Lining (z-index 1.5) -->
+                    <div class="envelope-pocket-bg"></div>
+                    
                     <!-- Envelope Front Body (z-index 3) -->
                     <img class="envelope-layer body" src="assets/body.png" alt="Envelope Body">
+                    
+                    <!-- Invitation Details Button (z-index 4) -->
+                    <div id="invitation-details" class="invitation-details hidden">
+                        <button class="cta-button">See Details</button>
+                    </div>
                 </div>
             </div>
-        </section>
-
-        <!-- A hidden section that could be shown after the envelope opens, if needed -->
-        <section id="invitation-details" class="invitation-details hidden">
-            <button class="cta-button">View Full Details</button>
         </section>
     </main>
 
