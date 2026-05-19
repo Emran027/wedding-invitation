@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wedding Invitation</title>
+    <!-- Google Fonts for an elegant aesthetic -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=Montserrat:wght@200;300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    
+    <!-- Ambient background element -->
+    <div class="ambient-background"></div>
+
+    <main class="app-container">
+        <header class="text-header">
+            <h1 class="elegant-title">You're Invited</h1>
+            <p class="elegant-subtitle">Tap the envelope to open</p>
+        </header>
+
+        <section class="envelope-section">
+            <div id="envelope-container" class="envelope-container">
+                <!-- Image sequence for frames 1 to 6 -->
+                <img id="envelope-img" class="envelope-img" src="assets/1.png" alt="Wedding Envelope">
+                
+                <!-- Final Composed State using top.png and body.png -->
+                <div id="envelope-composed" class="envelope-composed hidden">
+                    <!-- Flap background (z-index 1) -->
+                    <img class="envelope-layer flap" src="assets/top.png" alt="Envelope Flap">
+                    
+                    <!-- Invitation Card that slides up (z-index 2) -->
+                    <div id="invitation-card" class="invitation-card">
+                        <div class="card-inner">
+                            <span class="card-tag">Save the Date</span>
+                            <div class="card-monogram">DR</div>
+                            <h2 class="card-names">Dristy & Ratul</h2>
+                            <div class="card-date-box">
+                                <span class="card-date-day">01</span>
+                                <span class="card-date-divider">.</span>
+                                <span class="card-date-month">06</span>
+                                <span class="card-date-divider">.</span>
+                                <span class="card-date-year">26</span>
+                            </div>
+                            <div class="card-line"></div>
+                            <p class="card-venue">Tetulia, Panchagar</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Envelope Front Body (z-index 3) -->
+                    <img class="envelope-layer body" src="assets/body.png" alt="Envelope Body">
+                </div>
+            </div>
+        </section>
+
+        <!-- A hidden section that could be shown after the envelope opens, if needed -->
+        <section id="invitation-details" class="invitation-details hidden">
+            <button class="cta-button">View Full Details</button>
+        </section>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
