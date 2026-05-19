@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 clearInterval(animationInterval);
                 
                 // Swap the single image for the composed multilayer open envelope
-                envelopeImg.classList.add('hidden');
+                envelopeImg.style.visibility = 'hidden';
                 envelopeComposed.classList.remove('hidden');
                 
                 // Small delay to trigger the CSS transition for sliding the card up

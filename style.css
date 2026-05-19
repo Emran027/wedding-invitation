@@ -40,6 +40,8 @@ body {
     z-index: -1;
     pointer-events: none;
     transition: filter 1.2s ease-in-out, transform 1.2s ease-in-out;
+    will-change: filter, transform;
+    transform: translateZ(0); /* GPU acceleration for smooth blur changes */
 }
 
 .ambient-background.blurred {
@@ -95,26 +97,31 @@ body {
 .envelope-container {
     position: relative;
     cursor: pointer;
+    /* Smooth transitions for transform, opacity, and filter to prevent shaking */
     transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.8s ease, filter 0.8s ease;
+    /* Subtle drop shadow for the envelope to make it feel tangible */
     filter: drop-shadow(0 15px 30px rgba(0,0,0,0.15));
     
+    /* Enforce size so container doesn't collapse when the image is hidden */
     width: 100%;
     max-width: 450px; /* Restored original full envelope size */
     aspect-ratio: 6 / 7;
+    will-change: transform, filter;
+    transform: translate3d(0, 0, 0); /* Force GPU layer rendering */
 }
 
 .envelope-container:hover {
-    transform: scale(1.03) translateY(-5px);
+    transform: scale(1.03) translateY(-5px) translate3d(0, 0, 0);
     filter: drop-shadow(0 20px 35px rgba(0,0,0,0.2));
 }
 
 .envelope-container.animating {
     pointer-events: none;
-    transform: scale(1) translateY(0);
+    transform: scale(1) translateY(0) translate3d(0, 0, 0);
 }
 
 .envelope-container.moved-up {
-    transform: translateY(-80px) scale(1); /* Move up by fixed distance to make space for button */
+    transform: translateY(-80px) scale(1) translate3d(0, 0, 0); /* Move up by fixed distance to make space for button */
     filter: drop-shadow(0 25px 50px rgba(0,0,0,0.35));
 }
 
@@ -186,14 +193,15 @@ body {
     border-radius: 6px;
     
     /* Initially hidden deep in pocket */
-    transform: translateY(20%) scale(0.95);
+    transform: translateY(20%) scale(0.95) translate3d(0, 0, 0);
     opacity: 0;
     transition: transform 1.6s cubic-bezier(0.25, 1, 0.5, 1), opacity 1s ease;
+    will-change: transform, opacity;
 }
 
 .envelope-composed.open .invitation-card {
     /* Slide out of pocket, moving up and scaling up */
-    transform: translateY(-56%) scale(1.02);
+    transform: translateY(-56%) scale(1.02) translate3d(0, 0, 0);
     opacity: 1;
 }
 
@@ -446,7 +454,7 @@ body {
         font-size: 0.6rem;
     }
     .envelope-composed.open .invitation-card {
-        transform: translateY(-74%) scale(1.02); /* Slide up significantly higher on mobile to fully reveal card text above pocket V */
+        transform: translateY(-74%) scale(1.02) translate3d(0, 0, 0); /* Slide up significantly higher on mobile to fully reveal card text above pocket V */
     }
     
     /* Mobile specific background */
