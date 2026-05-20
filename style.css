@@ -201,19 +201,6 @@ body {
     will-change: transform, opacity;
 }
 
-/* Floral decoration tucked inside the envelope alongside the card */
-.flower-decor {
-    position: absolute;
-    bottom: -15%;       /* Hang low so it stays partially deep inside the pocket when open */
-    right: -25%;        /* Stick out to the right side of the card */
-    width: 65%;         /* Scale proportionally with the card */
-    max-width: 150px;
-    transform: rotate(20deg); /* Lean gracefully to the right */
-    z-index: 5;         /* Over the card surface, but automatically behind envelope body flap due to card z-index */
-    pointer-events: none;
-    filter: drop-shadow(2px 5px 12px rgba(0,0,0,0.15));
-}
-
 .envelope-composed.open .invitation-card {
     /* Slide out of pocket, moving up and scaling up */
     transform: translateY(-56%) scale(1.02) translate3d(0, 0, 0);
