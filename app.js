@@ -126,6 +126,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 invitationDetails.classList.add('hidden');
             }, 500);
         }
+
+        // Show details page
+        const detailsPage = document.getElementById('details-page');
+        if (detailsPage) {
+            detailsPage.classList.remove('hidden');
+            // Allow display:none to clear before adding opacity transition
+            setTimeout(() => {
+                detailsPage.classList.add('visible');
+
+                // Staggered box animations
+                const animItems = [
+                    ...detailsPage.querySelectorAll('.side'),
+                    detailsPage.querySelector('.schedule'),
+                    detailsPage.querySelector('.footer-info'),
+                ];
+                animItems.forEach((el, i) => {
+                    if (!el) return;
+                    setTimeout(() => {
+                        el.classList.add('animated');
+                    }, 350 + i * 140); // stagger each box by 140ms
+                });
+            }, 50);
+        }
     }
 
     // Initialize
