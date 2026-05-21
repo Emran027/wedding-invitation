@@ -492,22 +492,21 @@ body {
     }
 }
 
-/* Details Page Styles */
+/* Details Page – fixed overlay so background stays visible around the card */
 .details-page {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    min-height: 100vh;
+    position: fixed;
+    inset: 0;
     display: flex;
     justify-content: center;
-    align-items: flex-start;
-    padding: 1.2rem 1rem;
+    align-items: center;
+    /* Generous padding so background shows on ALL sides */
+    padding: 2rem 1.2rem;
     z-index: 20;
     opacity: 0;
     pointer-events: none;
-    overflow-y: auto;
     transition: opacity 1s ease 0.5s;
+    /* Do NOT overflow here – scrolling happens inside the card */
+    overflow: hidden;
 }
 
 .details-page.visible {
@@ -531,6 +530,13 @@ body {
     padding: 2rem 2rem 1.5rem;
     max-width: 700px;
     width: 100%;
+    /* KEY: scrollable box with max-height – content scrolls, background stays */
+    max-height: calc(100vh - 4rem);
+    overflow-y: auto;
+    overflow-x: hidden;
+    /* Custom scrollbar – elegant thin gold */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(201, 169, 110, 0.5) transparent;
     box-shadow:
         0 40px 80px rgba(0, 0, 0, 0.12),
         0 10px 20px rgba(0, 0, 0, 0.06),
@@ -542,7 +548,10 @@ body {
     transform: translateY(40px) scale(0.97);
     transition: transform 1.1s cubic-bezier(0.25, 1, 0.5, 1) 0.5s;
     position: relative;
-    overflow: hidden;
+    /* clip shimmer without blocking scroll (clip doesn't create scroll container) */
+    overflow: clip;
+    overflow-y: auto;
+    overscroll-behavior: contain;
 }
 
 /* Shimmer sweep across the card */
@@ -591,6 +600,21 @@ body {
 
 .details-page.visible .details-content {
     transform: translateY(0) scale(1);
+}
+
+/* Webkit scrollbar – thin gold track */
+.details-content::-webkit-scrollbar {
+    width: 5px;
+}
+.details-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+.details-content::-webkit-scrollbar-thumb {
+    background: rgba(201, 169, 110, 0.55);
+    border-radius: 10px;
+}
+.details-content::-webkit-scrollbar-thumb:hover {
+    background: rgba(201, 169, 110, 0.85);
 }
 
 /* ── Bismillah ── */
@@ -795,14 +819,16 @@ body {
 /* ── Responsive ── */
 @media (max-width: 600px) {
     .details-page {
-        padding: 1rem 0.7rem;
-        align-items: flex-start;
+        padding: 1.2rem 0.8rem; /* keeps background visible on all sides */
+        align-items: center;
     }
 
     .details-content {
         padding: 1.5rem 1rem 1.2rem;
         border-radius: 18px;
         max-width: 100%;
+        /* Slightly less height on mobile so background peeks top & bottom */
+        max-height: calc(100vh - 2.4rem);
     }
 
     .details-title {
@@ -882,3 +908,4 @@ body {
         margin: 0.2rem 0 0.5rem;
     }
 }
+
