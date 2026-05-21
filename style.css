@@ -216,7 +216,7 @@ body {
     border: none; /* Image provides the vintage borders */
     width: 100%;
     height: 100%;
-    padding: 2.8rem 1.5rem 1rem 1.5rem; /* Top padding to avoid overlapping the royal crest */
+    padding: 4rem 1.5rem 1rem 1.5rem; /* Pushed further down to sit properly on the white space */
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -431,7 +431,7 @@ body {
         /* Removed width: 78% and left: 11% so card is locked to envelope pocket structure (width: 88%, left: 6%) */
     }
     .card-inner {
-        padding: 0.6rem 0.3rem;
+        padding: 2.5rem 0.5rem 0.5rem 0.5rem; /* Moved text down on mobile to sit on white background */
     }
     .card-tag {
         font-size: 0.55rem;

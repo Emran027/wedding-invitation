@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
     for (let i = 1; i <= TOTAL_FRAMES; i++) {
         assetsToPreload.push(`assets/${i}.png`);
     }
-    assetsToPreload.push('assets/top.png', 'assets/body.png');
+    assetsToPreload.push('assets/top.png', 'assets/body.png', 'assets/card-bg.png');
 
     // 1. Preload all images to ensure smooth animation without flickering
     function preloadImages() {
