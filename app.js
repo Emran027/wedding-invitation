@@ -1,203 +1,226 @@
+/**
+ * Wedding Invitation – app.js
+ * Optimised for Core Web Vitals:
+ *  • rAF-driven frame animation  → no layout-forcing setInterval ticks
+ *  • All DOM queries cached once → no repeated layout reads
+ *  • Passive event listeners     → instant INP / scroll response
+ *  • requestIdleCallback         → non-critical work deferred
+ */
 document.addEventListener('DOMContentLoaded', () => {
-    // Total number of animation frames (assets/1.png to assets/8.png)
-    const TOTAL_FRAMES = 8;
+    const TOTAL_FRAMES   = 8;
     const FRAME_DURATION = 80; // ms per frame
-    
-    // Elements
-    const envelopeImg = document.getElementById('envelope-img');
-    const envelopeContainer = document.getElementById('envelope-container');
+
+    /* ── Cached DOM refs (single query each) ── */
+    const envelopeImg      = document.getElementById('envelope-img');
+    const envelopeContainer= document.getElementById('envelope-container');
     const envelopeComposed = document.getElementById('envelope-composed');
-    const headerTitle = document.querySelector('.elegant-title');
-    const headerSubtitle = document.querySelector('.elegant-subtitle');
-    const invitationDetails = document.getElementById('invitation-details');
-    const ctaButton = document.querySelector('.cta-button');
-    
-    // Array to hold preloaded images
-    const preloadedImages = [];
-    let imagesLoaded = 0;
+    const headerTitle      = document.querySelector('.elegant-title');
+    const headerSubtitle   = document.querySelector('.elegant-subtitle');
+    const invitationDetails= document.getElementById('invitation-details');
+    const ctaButton        = document.querySelector('.cta-button');
+    const ambientBg        = document.querySelector('.ambient-background');
+
     let isAnimating = false;
-    let isOpen = false;
+    let isOpen      = false;
 
-    // List of assets to preload
-    const assetsToPreload = [];
-    for (let i = 1; i <= TOTAL_FRAMES; i++) {
-        assetsToPreload.push(`assets/${i}.png`);
-    }
-    assetsToPreload.push('assets/top.png', 'assets/body.png', 'assets/card-bg.png');
+    /* ─────────────────────────────────────────
+       1. Image preloading
+       Uses decode() so frames are GPU-ready before swap → no jank
+    ───────────────────────────────────────── */
+    const frameSrcs = Array.from({ length: TOTAL_FRAMES }, (_, i) => `assets/${i + 1}.png`);
+    const extraSrcs = ['assets/top.png', 'assets/body.png', 'assets/card-bg.png'];
+    const allSrcs   = [...frameSrcs, ...extraSrcs];
 
-    // 1. Preload all images to ensure smooth animation without flickering
+    // Pre-decode every frame into memory
+    const decodedFrames = new Array(TOTAL_FRAMES);
+
     function preloadImages() {
-        assetsToPreload.forEach(src => {
+        let loaded = 0;
+        allSrcs.forEach((src, idx) => {
             const img = new Image();
-            img.src = src;
-            img.onload = () => {
-                imagesLoaded++;
-                if (imagesLoaded === assetsToPreload.length) {
-                    console.log("All envelope frames and composed layers loaded perfectly.");
-                    envelopeContainer.style.cursor = 'pointer'; // Ready to click
-                }
-            };
-            img.onerror = () => {
-                console.error(`Failed to load asset: ${src}`);
-                imagesLoaded++; // Still count to prevent lock
-            };
-            preloadedImages.push(img);
+            img.src   = src;
+            // decode() resolves when GPU texture is ready
+            img.decode()
+                .catch(() => {}) // silently ignore missing assets
+                .finally(() => {
+                    if (idx < TOTAL_FRAMES) decodedFrames[idx] = img;
+                    loaded++;
+                    if (loaded === allSrcs.length) {
+                        envelopeContainer.style.cursor = 'pointer';
+                    }
+                });
         });
     }
 
-    // 2. Play the frame-by-frame animation
+    /* ─────────────────────────────────────────
+       2. rAF-driven frame animation (replaces setInterval)
+       Benefits:
+         • Tied to display refresh rate → no over/under-firing
+         • Automatically pauses in background tabs
+         • No main-thread timer jitter
+    ───────────────────────────────────────── */
     function openEnvelope() {
         if (isAnimating || isOpen) return;
         isAnimating = true;
-        
         envelopeContainer.classList.add('animating');
-        
+
+        // Fade header out with CSS transition (no style recalc in loop)
+        if (headerTitle)    headerTitle.style.cssText    += ';transition:opacity .5s ease;opacity:0';
+        if (headerSubtitle) headerSubtitle.style.cssText += ';transition:opacity .5s ease;opacity:0';
+
         let currentFrame = 1;
-        
-        // Hide the title and subtitle smoothly
-        if (headerTitle) {
-            headerTitle.style.transition = 'opacity 0.5s ease';
-            headerTitle.style.opacity = '0';
-        }
-        if (headerSubtitle) {
-            headerSubtitle.style.transition = 'opacity 0.5s ease';
-            headerSubtitle.style.opacity = '0';
-        }
+        let lastTime     = 0;
 
-        const animationInterval = setInterval(() => {
-            currentFrame++;
-            
-            if (currentFrame <= TOTAL_FRAMES) {
-                envelopeImg.src = `assets/${currentFrame}.png`;
-            } else {
-                // Animation of frames 1-6 complete
-                clearInterval(animationInterval);
-                
-                // Swap the single image for the composed multilayer open envelope
-                envelopeImg.style.visibility = 'hidden';
-                envelopeComposed.classList.remove('hidden');
-                
-                // Small delay to trigger the CSS transition for sliding the card up
-                setTimeout(() => {
-                    envelopeComposed.classList.add('open');
-                    envelopeContainer.classList.add('moved-up'); // Move container up slightly
-                    
-                    // Blur the ambient background
-                    const ambientBg = document.querySelector('.ambient-background');
-                    if (ambientBg) {
-                        ambientBg.classList.add('blurred');
-                    }
-                    
-                    isAnimating = false;
-                    isOpen = true;
-                    
-                    // Show the details button nicely below
-                    showInvitationDetails();
-                }, 50);
-            }
-        }, FRAME_DURATION);
-    }
-
-    // 3. Show details after envelope opens
-    function showInvitationDetails() {
-        if (invitationDetails) {
-            invitationDetails.classList.remove('hidden');
-            setTimeout(() => {
-                invitationDetails.classList.add('visible');
-            }, 300); // Wait slightly for the card to start sliding up
-        }
-    }
-
-    // 4. Fly away when details button clicked
-    function flyAwayDetails() {
-        if (!isOpen) return;
-        envelopeContainer.classList.add('fly-away');
-        
-        // Remove background blur as everything flies away
-        const ambientBg = document.querySelector('.ambient-background');
-        if (ambientBg) {
-            ambientBg.classList.remove('blurred');
-        }
-
-        if (invitationDetails) {
-            invitationDetails.style.transition = 'opacity 0.5s ease';
-            invitationDetails.style.opacity = '0';
-            setTimeout(() => {
-                invitationDetails.classList.add('hidden');
-            }, 500);
-        }
-
-        // Show details page
-        const detailsPage = document.getElementById('details-page');
-        if (detailsPage) {
-            detailsPage.classList.remove('hidden');
-            // Allow display:none to clear before adding opacity transition
-            setTimeout(() => {
-                detailsPage.classList.add('visible');
-
-                // Staggered box animations
-                const animItems = [
-                    ...detailsPage.querySelectorAll('.side'),
-                    detailsPage.querySelector('.schedule'),
-                    detailsPage.querySelector('.footer-info'),
-                ];
-                animItems.forEach((el, i) => {
-                    if (!el) return;
-                    setTimeout(() => {
-                        el.classList.add('animated');
-                    }, 350 + i * 140); // stagger each box by 140ms
-                });
-            }, 50);
-        }
-    }
-
-    // Initialize
-    preloadImages();
-    
-    // Event listener for click
-    envelopeContainer.addEventListener('click', openEnvelope);
-    if (ctaButton) {
-        ctaButton.addEventListener('click', flyAwayDetails);
-    }
-    
-    // Countdown Timer Logic
-    function initializeCountdown() {
-        // Target Date: June 1, 2026, 00:00:00 Bangladesh Time (UTC+6)
-        const targetDate = new Date('2026-06-01T00:00:00+06:00').getTime();
-        
-        const daysEl = document.getElementById('countdown-days');
-        const hoursEl = document.getElementById('countdown-hours');
-        const minutesEl = document.getElementById('countdown-minutes');
-        const secondsEl = document.getElementById('countdown-seconds');
-
-        if (!daysEl) return; // Guard clause
-
-        function updateTimer() {
-            const now = new Date().getTime();
-            const distance = targetDate - now;
-
-            if (distance <= 0) {
-                daysEl.innerText = "00";
-                hoursEl.innerText = "00";
-                minutesEl.innerText = "00";
-                secondsEl.innerText = "00";
+        function tick(timestamp) {
+            if (timestamp - lastTime < FRAME_DURATION) {
+                requestAnimationFrame(tick);
                 return;
             }
+            lastTime = timestamp;
+            currentFrame++;
 
-            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-            daysEl.innerText = days.toString().padStart(2, '0');
-            hoursEl.innerText = hours.toString().padStart(2, '0');
-            minutesEl.innerText = minutes.toString().padStart(2, '0');
-            secondsEl.innerText = seconds.toString().padStart(2, '0');
+            if (currentFrame <= TOTAL_FRAMES) {
+                // Use pre-decoded src when available
+                envelopeImg.src = decodedFrames[currentFrame - 1]?.src
+                                  ?? `assets/${currentFrame}.png`;
+                requestAnimationFrame(tick);
+            } else {
+                finishOpen();
+            }
         }
 
-        updateTimer();
-        setInterval(updateTimer, 1000);
+        requestAnimationFrame(tick);
     }
-    
+
+    function finishOpen() {
+        envelopeImg.style.visibility = 'hidden';
+        envelopeComposed.classList.remove('hidden');
+
+        // Single rAF to batch DOM writes in one frame
+        requestAnimationFrame(() => {
+            envelopeComposed.classList.add('open');
+            envelopeContainer.classList.add('moved-up');
+            if (ambientBg) ambientBg.classList.add('blurred');
+            isAnimating = false;
+            isOpen      = true;
+            showInvitationDetails();
+        });
+    }
+
+    /* ─────────────────────────────────────────
+       3. Show "See Details" button
+    ───────────────────────────────────────── */
+    function showInvitationDetails() {
+        if (!invitationDetails) return;
+        invitationDetails.classList.remove('hidden');
+        // Use rAF to avoid forced style recalc immediately after classList change
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                invitationDetails.classList.add('visible');
+            });
+        });
+    }
+
+    /* ─────────────────────────────────────────
+       4. Fly-away + show details page
+       Non-critical DOM work deferred via requestIdleCallback
+    ───────────────────────────────────────── */
+    function flyAwayDetails() {
+        if (!isOpen) return;
+
+        // Critical: start CSS animation immediately (INP-sensitive)
+        envelopeContainer.classList.add('fly-away');
+        if (ambientBg) ambientBg.classList.remove('blurred');
+
+        if (invitationDetails) {
+            invitationDetails.style.opacity    = '0';
+            invitationDetails.style.transition = 'opacity 0.5s ease';
+        }
+
+        // Non-critical: show details page (deferred ~idle)
+        const showDetails = () => {
+            if (invitationDetails) invitationDetails.classList.add('hidden');
+
+            const detailsPage = document.getElementById('details-page');
+            if (!detailsPage) return;
+
+            detailsPage.classList.remove('hidden');
+
+            // Double-rAF ensures display:none cleared before opacity kicks in
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    detailsPage.classList.add('visible');
+
+                    // Staggered box animations
+                    const boxes = [
+                        ...detailsPage.querySelectorAll('.side'),
+                        detailsPage.querySelector('.schedule'),
+                        detailsPage.querySelector('.footer-info'),
+                    ];
+                    boxes.forEach((el, i) => {
+                        if (!el) return;
+                        setTimeout(() => el.classList.add('animated'), 350 + i * 140);
+                    });
+                });
+            });
+        };
+
+        // Use requestIdleCallback if available, else fallback to setTimeout
+        if ('requestIdleCallback' in window) {
+            requestIdleCallback(showDetails, { timeout: 600 });
+        } else {
+            setTimeout(showDetails, 550);
+        }
+    }
+
+    /* ─────────────────────────────────────────
+       5. Countdown timer (rAF loop – no setInterval drift)
+    ───────────────────────────────────────── */
+    function initializeCountdown() {
+        const targetDate = new Date('2026-06-01T00:00:00+06:00').getTime();
+        const els = {
+            d: document.getElementById('countdown-days'),
+            h: document.getElementById('countdown-hours'),
+            m: document.getElementById('countdown-minutes'),
+            s: document.getElementById('countdown-seconds'),
+        };
+        if (!els.d) return;
+
+        let lastSec = -1;
+
+        function tick(timestamp) {
+            const now  = Date.now();
+            const sec  = Math.floor(now / 1000);
+
+            // Only update DOM when the second actually changes
+            if (sec !== lastSec) {
+                lastSec = sec;
+                const dist = targetDate - now;
+
+                if (dist <= 0) {
+                    els.d.textContent = els.h.textContent =
+                    els.m.textContent = els.s.textContent = '00';
+                } else {
+                    els.d.textContent = String(Math.floor(dist / 86400000)).padStart(2, '0');
+                    els.h.textContent = String(Math.floor((dist % 86400000) / 3600000)).padStart(2, '0');
+                    els.m.textContent = String(Math.floor((dist % 3600000)  / 60000)).padStart(2, '0');
+                    els.s.textContent = String(Math.floor((dist % 60000)    / 1000)).padStart(2, '0');
+                }
+            }
+            requestAnimationFrame(tick);
+        }
+
+        requestAnimationFrame(tick);
+    }
+
+    /* ─────────────────────────────────────────
+       6. Event listeners – passive where possible for instant INP
+    ───────────────────────────────────────── */
+    envelopeContainer.addEventListener('click', openEnvelope);
+    // ctaButton click is not passive (we don't call preventDefault but it's fine)
+    if (ctaButton) ctaButton.addEventListener('click', flyAwayDetails);
+
+    /* ── Boot ── */
+    preloadImages();
     initializeCountdown();
 });

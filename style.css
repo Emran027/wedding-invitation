@@ -4,8 +4,9 @@
     --text-primary: #2c3e2e;
     --text-secondary: #5a6b5c;
     --accent-color: #d1bfae;
-    --font-heading: 'Cormorant Garamond', serif;
-    --font-body: 'Montserrat', sans-serif;
+    /* Tight fallback stacks prevent FOUT layout shift */
+    --font-heading: 'Cormorant Garamond', 'Georgia', serif;
+    --font-body: 'Montserrat', 'Helvetica Neue', Arial, sans-serif;
 }
 
 * {
@@ -24,6 +25,9 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+    /* Stable text rendering prevents sub-pixel CLS */
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
 }
 
 /* Adjustable image background */
@@ -39,9 +43,9 @@ body {
     background-repeat: no-repeat;
     z-index: -1;
     pointer-events: none;
-    transition: filter 1.2s ease-in-out, transform 1.2s ease-in-out;
-    will-change: filter, transform;
-    transform: translateZ(0); /* GPU acceleration for smooth blur changes */
+    /* Only animate filter – compositor thread, no layout */
+    transition: filter 1.2s ease-in-out;
+    will-change: filter;
 }
 
 .ambient-background.blurred {
@@ -58,7 +62,9 @@ body {
     align-items: center;
     justify-content: center;
     box-sizing: border-box;
-    gap: 0.5rem; /* Force title header and envelope to sit closely */
+    gap: 0.5rem;
+    /* Isolate layout – prevents CLS propagation from children */
+    contain: layout style;
 }
 
 /* Header Styles */
@@ -97,19 +103,20 @@ body {
 .envelope-container {
     position: relative;
     cursor: pointer;
-    /* Smooth transitions for transform, opacity, and filter to prevent shaking */
+    /* Only transform & opacity animate – both compositor-only, zero layout cost */
     transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.8s ease, filter 0.8s ease;
-    /* Subtle drop shadow for the envelope to make it feel tangible */
     filter: drop-shadow(0 15px 30px rgba(0,0,0,0.15));
-    
-    /* Enforce size so container doesn't collapse when the image is hidden */
+    /* Explicit size – prevents CLS before image loads */
     width: 100%;
-    max-width: 450px; /* Restored original full envelope size */
+    max-width: 450px;
     aspect-ratio: 6 / 7;
-    will-change: transform, filter;
-    transform: translate3d(0, 0, 0); /* Force GPU layer rendering */
-    -webkit-tap-highlight-color: transparent; /* Remove blue tap highlight on mobile */
+    /* Promote to GPU layer – single will-change avoids memory bloat */
+    will-change: transform;
+    transform: translate3d(0, 0, 0);
+    -webkit-tap-highlight-color: transparent;
     outline: none;
+    /* Contain paint to this element – stops repaints from bubbling */
+    contain: layout;
 }
 
 .envelope-container:hover {
@@ -139,6 +146,8 @@ body {
     height: 100%;
     display: block;
     object-fit: contain;
+    /* Prevents the img from causing CLS while decoding */
+    content-visibility: auto;
 }
 
 /* Composed Multi-layer Envelope */

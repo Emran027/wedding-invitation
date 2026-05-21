@@ -3,11 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wedding Invitation</title>
-    <!-- Google Fonts for an elegant aesthetic -->
+    <title>Wedding Invitation – Dristy & Ratul | 1 June 2026</title>
+    <meta name="description" content="You are invited to the wedding of Shifa Islam Dristy and Ratul on 1 June 2026 at Mominpara, Tetulia, Panchagar.">
+    <meta name="theme-color" content="#fcfbf9">
+
+    <!-- Critical resource hints -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=Montserrat:wght@200;300;400;500&family=Tiro+Bangla:ital@0;1&display=swap" rel="stylesheet">
+
+    <!-- Preload LCP hero image (first envelope frame) -->
+    <link rel="preload" as="image" href="assets/1.png" fetchpriority="high">
+    <!-- Preload background (desktop & mobile) -->
+    <link rel="preload" as="image" href="assets/bg.png" media="(min-width: 601px)">
+    <link rel="preload" as="image" href="assets/bg-mobile.png" media="(max-width: 600px)">
+
+    <!-- Google Fonts: loaded NON-blocking via media swap trick -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Montserrat:wght@300;400;500&family=Tiro+Bangla:ital@0;1&display=swap" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Montserrat:wght@300;400;500&family=Tiro+Bangla:ital@0;1&display=swap"></noscript>
+
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -24,12 +37,14 @@
         <section class="envelope-section">
             <div id="envelope-container" class="envelope-container">
                 <!-- Image sequence for frames 1 to 6 -->
-                <img id="envelope-img" class="envelope-img" src="assets/1.png" alt="Wedding Envelope">
+                <!-- fetchpriority=high → browser prioritises this as LCP element -->
+                <img id="envelope-img" class="envelope-img" src="assets/1.png" alt="Wedding Envelope"
+                     width="450" height="525" fetchpriority="high" decoding="async">
                 
                 <!-- Final Composed State using top.png and body.png -->
                 <div id="envelope-composed" class="envelope-composed hidden">
                     <!-- Flap background (z-index 1) -->
-                    <img class="envelope-layer flap" src="assets/top.png" alt="Envelope Flap">
+                    <img class="envelope-layer flap" src="assets/top.png" alt="Envelope Flap" width="450" height="525" decoding="async" loading="lazy">
                     
                     <!-- Invitation Card that slides up (z-index 2) -->
                     <div id="invitation-card" class="invitation-card">
@@ -55,13 +70,13 @@
                     </div>
                     
                     <!-- Envelope Back (z-index 1) -->
-                    <img class="envelope-layer back" src="assets/8.png" alt="Envelope Back">
+                    <img class="envelope-layer back" src="assets/8.png" alt="Envelope Back" width="450" height="525" decoding="async" loading="lazy">
                     
                     <!-- Envelope Pocket Inner Lining (z-index 1.5) -->
                     <div class="envelope-pocket-bg"></div>
                     
                     <!-- Envelope Front Body (z-index 3) -->
-                    <img class="envelope-layer body" src="assets/body.png" alt="Envelope Body">
+                    <img class="envelope-layer body" src="assets/body.png" alt="Envelope Body" width="450" height="525" decoding="async" loading="lazy">
                     
                     <!-- Invitation Details Button (z-index 4) -->
                     <div id="invitation-details" class="invitation-details hidden">
@@ -121,6 +136,6 @@
         </section>
     </main>
 
-    <script src="app.js"></script>
+    <script src="app.js" defer></script>
 </body>
 </html>
