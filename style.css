@@ -765,8 +765,8 @@ body {
 /* ── Border beam: travels once around box perimeter when it appears ── */
 @keyframes beam-travel {
     0%   { offset-distance: 0%;   opacity: 0; }
-    4%   { opacity: 1; }
-    92%  { opacity: 1; }
+    2%   { opacity: 1; }          /* fade in quickly */
+    96%  { opacity: 1; }          /* stay bright almost all the way */
     100% { offset-distance: 100%; opacity: 0; }
 }
 
@@ -800,7 +800,7 @@ body {
     /* offset-path set inline from JS */
     offset-rotate: auto;
     offset-distance: 0%;
-    animation: beam-travel 1.6s cubic-bezier(0.4, 0, 0.56, 1) 1 forwards;
+    animation: beam-travel 3.5s linear 1 forwards;
 }
 
 .schedule-title {
