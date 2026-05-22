@@ -958,8 +958,9 @@ body {
     margin-top: 1rem;
     padding: 0 0.2rem;
     height: 130px;
-    overflow: hidden;
+    overflow: visible; /* allow groom to move without being clipped */
 }
+
 
 .cartoon {
     height: 115px;

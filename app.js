@@ -284,16 +284,20 @@ document.addEventListener('DOMContentLoaded', () => {
         let cachedGroomTravel = 0;
 
         function measureOnce() {
-            // Track usable drag range
+            // Slider drag range
             cachedMaxDrag = track.clientWidth - thumb.offsetWidth - 6;
 
-            // Reset groom to x=0 first so measurement is accurate
+            // Reset groom so measurement starts from position 0
             groom.style.setProperty('--groom-x', '0px');
 
-            // Measure gap between groom's right edge and bride's left edge
-            const groomRect = groom.getBoundingClientRect();
-            const brideRect = bride.getBoundingClientRect();
-            cachedGroomTravel = Math.max(0, brideRect.left - groomRect.right);
+            // Use element widths directly — immune to scroll/viewport issues
+            // In a space-between flex container:
+            //   gap between groom.right and bride.left
+            //   = containerWidth - groomWidth - brideWidth
+            const containerW     = groom.parentElement.clientWidth;
+            const groomW         = groom.offsetWidth;
+            const brideW         = bride.offsetWidth;
+            cachedGroomTravel    = Math.max(0, containerW - groomW - brideW);
         }
 
         function applyProgress(progress) {
