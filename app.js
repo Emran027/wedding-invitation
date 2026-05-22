@@ -275,87 +275,83 @@ document.addEventListener('DOMContentLoaded', () => {
         const bride   = document.getElementById('bride-cartoon');
         if (!thumb || !track || !groom || !bride) return;
 
-        let isDragging = false;
+        let isDragging   = false;
         let startClientX = 0;
-        let currentOffset = 0;  // px thumb has moved from start
+        let currentOffset = 0;
 
-        function getMaxDrag() {
-            // Available track width minus thumb width and its left margin
-            return track.clientWidth - thumb.offsetWidth - 6;
-        }
+        // Cached once at drag start – prevents shrinking-distance bug
+        let cachedMaxDrag    = 0;
+        let cachedGroomTravel = 0;
 
-        function getGroomTravel() {
-            // Distance groom center needs to move to reach bride
+        function measureOnce() {
+            // Track usable drag range
+            cachedMaxDrag = track.clientWidth - thumb.offsetWidth - 6;
+
+            // Reset groom to x=0 first so measurement is accurate
+            groom.style.setProperty('--groom-x', '0px');
+
+            // Measure gap between groom's right edge and bride's left edge
             const groomRect = groom.getBoundingClientRect();
             const brideRect = bride.getBoundingClientRect();
-            return Math.max(0, brideRect.left - groomRect.right + 8);
+            cachedGroomTravel = Math.max(0, brideRect.left - groomRect.right);
         }
 
         function applyProgress(progress) {
-            const maxDrag    = getMaxDrag();
-            const thumbX     = progress * maxDrag;
-            const groomX     = progress * getGroomTravel();
+            const thumbX  = progress * cachedMaxDrag;
+            const groomX  = progress * cachedGroomTravel;
 
-            // Move thumb
             thumb.style.transform = `translateX(${thumbX}px)`;
-
-            // Move groom cartoon via CSS variable
             groom.style.setProperty('--groom-x', `${groomX}px`);
-
-            // Fill track
-            const fillPct = progress * 100;
-            track.style.setProperty('--fill-pct', `${fillPct}%`);
-
-            // Fade label as thumb advances
-            if (label) label.style.opacity = String(1 - progress * 1.4);
+            track.style.setProperty('--fill-pct', `${progress * 100}%`);
+            if (label) label.style.opacity = String(Math.max(0, 1 - progress * 1.6));
         }
 
         function onStart(e) {
+            measureOnce(); // snapshot dimensions BEFORE any movement
             isDragging   = true;
             startClientX = (e.touches ? e.touches[0].clientX : e.clientX) - currentOffset;
+            // Kill any transition so movement is instant
             thumb.style.transition = 'none';
-            groom.style.transition = 'none';
         }
 
         function onMove(e) {
             if (!isDragging) return;
-            const clientX   = e.touches ? e.touches[0].clientX : e.clientX;
-            const rawOffset = clientX - startClientX;
-            const maxDrag   = getMaxDrag();
-            currentOffset   = Math.min(Math.max(0, rawOffset), maxDrag);
-            const progress  = currentOffset / maxDrag;
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const raw     = clientX - startClientX;
+            currentOffset = Math.min(Math.max(0, raw), cachedMaxDrag);
+            const progress = currentOffset / cachedMaxDrag;
             applyProgress(progress);
 
-            if (progress >= 0.95) {
+            if (progress >= 0.98) {
                 isDragging = false;
-                triggerGallery();
+                applyProgress(1); // snap to exactly 100%
+                setTimeout(triggerGallery, 150);
             }
         }
 
         function onEnd() {
             if (!isDragging) return;
             isDragging = false;
-            const maxDrag  = getMaxDrag();
-            const progress = currentOffset / maxDrag;
+            const progress = currentOffset / cachedMaxDrag;
 
             if (progress >= 0.95) {
-                triggerGallery();
+                applyProgress(1);
+                setTimeout(triggerGallery, 150);
             } else {
-                // Snap back smoothly
+                // Snap back
                 currentOffset = 0;
                 thumb.style.transition = 'transform 0.4s cubic-bezier(0.25,1,0.5,1)';
-                groom.style.transition = 'transform 0.4s cubic-bezier(0.25,1,0.5,1)';
                 applyProgress(0);
             }
         }
 
         // Mouse
-        thumb.addEventListener('mousedown',  onStart);
+        thumb.addEventListener('mousedown',   onStart);
         document.addEventListener('mousemove', onMove);
         document.addEventListener('mouseup',   onEnd);
         // Touch
-        thumb.addEventListener('touchstart', onStart, { passive: true });
-        document.addEventListener('touchmove', onMove, { passive: true });
+        thumb.addEventListener('touchstart',  onStart, { passive: true });
+        document.addEventListener('touchmove', onMove,  { passive: true });
         document.addEventListener('touchend',  onEnd);
     }
 
