@@ -264,7 +264,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /* ─────────────────────────────────────────
        8. Slide-to-see-pictures slider
-       • Drag/touch thumb → groom moves toward bride proportionally
+       • Drag/touch thumb → groom & bride move toward center proportionally
        • Full slide (≥95%) → gallery page transition
     ───────────────────────────────────────── */
     function initSlider() {
@@ -287,13 +287,11 @@ document.addEventListener('DOMContentLoaded', () => {
             // Slider drag range
             cachedMaxDrag = track.clientWidth - thumb.offsetWidth - 6;
 
-            // Reset groom so measurement starts from position 0
+            // Reset groom & bride so measurement starts from position 0
             groom.style.setProperty('--groom-x', '0px');
+            bride.style.setProperty('--bride-x', '0px');
 
             // Use element widths directly — immune to scroll/viewport issues
-            // In a space-between flex container:
-            //   gap between groom.right and bride.left
-            //   = containerWidth - groomWidth - brideWidth
             const containerW     = groom.parentElement.clientWidth;
             const groomW         = groom.offsetWidth;
             const brideW         = bride.offsetWidth;
@@ -302,10 +300,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         function applyProgress(progress) {
             const thumbX  = progress * cachedMaxDrag;
-            const groomX  = progress * cachedGroomTravel;
+            
+            // Groom moves right by half the gap, Bride moves left by half the gap
+            const groomX  = progress * (cachedGroomTravel / 2);
+            const brideX  = -progress * (cachedGroomTravel / 2);
 
             thumb.style.transform = `translateX(${thumbX}px)`;
             groom.style.setProperty('--groom-x', `${groomX}px`);
+            bride.style.setProperty('--bride-x', `${brideX}px`);
             track.style.setProperty('--fill-pct', `${progress * 100}%`);
             if (label) label.style.opacity = String(Math.max(0, 1 - progress * 1.6));
         }
@@ -314,8 +316,11 @@ document.addEventListener('DOMContentLoaded', () => {
             measureOnce(); // snapshot dimensions BEFORE any movement
             isDragging   = true;
             startClientX = (e.touches ? e.touches[0].clientX : e.clientX) - currentOffset;
+            
             // Kill any transition so movement is instant
             thumb.style.transition = 'none';
+            groom.style.transition = 'none';
+            bride.style.transition = 'none';
         }
 
         function onMove(e) {
@@ -345,6 +350,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Snap back
                 currentOffset = 0;
                 thumb.style.transition = 'transform 0.4s cubic-bezier(0.25,1,0.5,1)';
+                groom.style.transition = 'transform 0.4s cubic-bezier(0.25,1,0.5,1)';
+                bride.style.transition = 'transform 0.4s cubic-bezier(0.25,1,0.5,1)';
                 applyProgress(0);
             }
         }
@@ -360,7 +367,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /* ─────────────────────────────────────────
-       9. Gallery transition
+       9. Gallery transitions & Back Button Logic
     ───────────────────────────────────────── */
     function triggerGallery() {
         const detailsPage = document.getElementById('details-page');
@@ -371,7 +378,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (detailsPage) {
             detailsPage.style.transition = 'opacity 0.6s ease';
             detailsPage.style.opacity    = '0';
-            setTimeout(() => detailsPage.classList.add('hidden'), 650);
+            setTimeout(() => {
+                detailsPage.classList.add('hidden');
+                detailsPage.style.opacity = '';
+                detailsPage.style.transition = '';
+            }, 650);
         }
 
         // Show gallery
@@ -383,11 +394,82 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    function backToEnvelope() {
+        const detailsPage = document.getElementById('details-page');
+        if (detailsPage) {
+            detailsPage.style.transition = 'opacity 0.6s ease';
+            detailsPage.style.opacity    = '0';
+            setTimeout(() => {
+                detailsPage.classList.add('hidden');
+                detailsPage.classList.remove('visible');
+                detailsPage.style.opacity = '';
+                detailsPage.style.transition = '';
+            }, 600);
+        }
+
+        // Bring back envelope container
+        envelopeContainer.classList.remove('fly-away');
+        if (ambientBg) ambientBg.classList.add('blurred');
+        
+        // Show Details Button again
+        if (invitationDetails) {
+            invitationDetails.classList.remove('hidden');
+            requestAnimationFrame(() => {
+                invitationDetails.style.transition = 'opacity 0.6s ease';
+                invitationDetails.style.opacity    = '1';
+            });
+        }
+    }
+
+    function backToDetails() {
+        const detailsPage = document.getElementById('details-page');
+        const galleryPage = document.getElementById('gallery-page');
+
+        // Fade out gallery
+        if (galleryPage) {
+            galleryPage.classList.remove('visible');
+            setTimeout(() => galleryPage.classList.add('hidden'), 800);
+        }
+
+        // Show details page
+        if (detailsPage) {
+            detailsPage.classList.remove('hidden');
+            // Clear any inline styles that might interfere with fade-in
+            detailsPage.style.opacity = '';
+            detailsPage.style.transition = '';
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    detailsPage.classList.add('visible');
+                });
+            });
+        }
+
+        // Reset slider elements
+        const thumb = document.getElementById('slide-thumb');
+        const groom = document.getElementById('groom-cartoon');
+        const bride = document.getElementById('bride-cartoon');
+        const track = document.getElementById('slide-track');
+        const label = document.getElementById('slide-label');
+        if (thumb && groom && bride && track) {
+            thumb.style.transition = 'none';
+            groom.style.transition = 'none';
+            bride.style.transition = 'none';
+            track.style.setProperty('--fill-pct', '0%');
+            thumb.style.transform = 'translateX(0px)';
+            groom.style.setProperty('--groom-x', '0px');
+            bride.style.setProperty('--bride-x', '0px');
+            if (label) label.style.opacity = '1';
+        }
+    }
+
+    // Attach Back Button Event Listeners
+    const btnBackToEnvelope = document.getElementById('back-to-envelope');
+    const btnBackToDetails  = document.getElementById('back-to-details');
+    if (btnBackToEnvelope) btnBackToEnvelope.addEventListener('click', backToEnvelope);
+    if (btnBackToDetails)  btnBackToDetails.addEventListener('click', backToDetails);
+
     /* ── Boot ── */
     preloadImages();
     initializeCountdown();
-
-    // Slider is initialized after details page is shown
-    // (called from flyAwayDetails once page is visible)
 });
 

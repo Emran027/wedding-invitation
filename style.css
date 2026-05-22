@@ -970,7 +970,7 @@ body {
     filter: drop-shadow(0 4px 8px rgba(0,0,0,0.15));
 }
 
-/* JS sets --groom-x to translate groom toward bride */
+/* JS sets --groom-x and --bride-x to translate them toward the center */
 .groom-cartoon {
     transform-origin: bottom left;
     transform: translateX(var(--groom-x, 0px));
@@ -978,7 +978,49 @@ body {
     z-index: 2;
 }
 
-.bride-cartoon { z-index: 1; }
+.bride-cartoon {
+    transform-origin: bottom right;
+    transform: translateX(var(--bride-x, 0px));
+    will-change: transform;
+    z-index: 1;
+}
+
+/* ════════════════════════════════════════
+   BACK BUTTON
+════════════════════════════════════════ */
+.back-button {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid rgba(201, 169, 110, 0.4);
+    background: rgba(255, 255, 255, 0.45);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: #0b3a2a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.2rem;
+    font-weight: bold;
+    z-index: 12;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.back-button:hover {
+    background: rgba(255, 255, 255, 0.75);
+    border-color: rgba(201, 169, 110, 0.7);
+    transform: scale(1.08);
+}
+
+.back-button:active {
+    transform: scale(0.92);
+}
+
 
 /* ════════════════════════════════════════
    SLIDE BAR
