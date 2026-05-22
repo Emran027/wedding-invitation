@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wedding Invitation – Dristy & Ratul | 1 June 2026</title>
+    <title>Wedding Invitation – Dristy &amp; Ratul | 1 June 2026</title>
     <meta name="description" content="You are invited to the wedding of Shifa Islam Dristy and Ratul on 1 June 2026 at Mominpara, Tetulia, Panchagar.">
     <meta name="theme-color" content="#fcfbf9">
 
@@ -24,7 +24,7 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    
+
     <!-- Ambient background element -->
     <div class="ambient-background"></div>
 
@@ -36,21 +36,21 @@
 
         <section class="envelope-section">
             <div id="envelope-container" class="envelope-container">
-                <!-- Image sequence for frames 1 to 6 -->
+                <!-- Image sequence for frames 1 to 8 -->
                 <!-- fetchpriority=high → browser prioritises this as LCP element -->
                 <img id="envelope-img" class="envelope-img" src="assets/1.png" alt="Wedding Envelope"
                      width="450" height="525" fetchpriority="high" decoding="async">
-                
+
                 <!-- Final Composed State using top.png and body.png -->
                 <div id="envelope-composed" class="envelope-composed hidden">
-                    <!-- Flap background (z-index 1) -->
+                    <!-- Flap background -->
                     <img class="envelope-layer flap" src="assets/top.png" alt="Envelope Flap" width="450" height="525" decoding="async" loading="lazy">
-                    
-                    <!-- Invitation Card that slides up (z-index 2) -->
+
+                    <!-- Invitation Card that slides up -->
                     <div id="invitation-card" class="invitation-card">
                         <div class="card-inner">
                             <span class="card-tag">Save the Date</span>
-                            <h2 class="card-names">Dristy & Ratul</h2>
+                            <h2 class="card-names">Dristy &amp; Ratul</h2>
                             <div class="card-date-box">
                                 <span class="card-date-day">01</span>
                                 <span class="card-date-divider">.</span>
@@ -68,23 +68,25 @@
                             <p class="card-venue">Tetulia, Panchagar</p>
                         </div>
                     </div>
-                    
-                    <!-- Envelope Back (z-index 1) -->
+
+                    <!-- Envelope Back -->
                     <img class="envelope-layer back" src="assets/8.png" alt="Envelope Back" width="450" height="525" decoding="async" loading="lazy">
-                    
-                    <!-- Envelope Pocket Inner Lining (z-index 1.5) -->
+
+                    <!-- Envelope Pocket Inner Lining -->
                     <div class="envelope-pocket-bg"></div>
-                    
-                    <!-- Envelope Front Body (z-index 3) -->
+
+                    <!-- Envelope Front Body -->
                     <img class="envelope-layer body" src="assets/body.png" alt="Envelope Body" width="450" height="525" decoding="async" loading="lazy">
-                    
-                    <!-- Invitation Details Button (z-index 4) -->
+
+                    <!-- Invitation Details Button -->
                     <div id="invitation-details" class="invitation-details hidden">
                         <button class="cta-button">See Details</button>
                     </div>
                 </div>
             </div>
         </section>
+
+        <!-- ── Details Page ── -->
         <section id="details-page" class="details-page hidden">
             <div class="details-content">
                 <div class="bismillah">বিসমিল্লাহির রাহমানির রাহিম</div>
@@ -93,7 +95,7 @@
 
                 <div class="greeting-box">
                     <p class="greeting">জনাব/বেগম, আসসালামু আলাইকুম<br><br>
-                    পরম করুণাময় আল্লাহতালা'র অশেষ মেহেরবানিতে আগামী ১ জুন ২০২৬ ইং ১৮ জ্যৈষ্ঠ ১৪৩৩ বাংলা মোতাবেক ২৫ জিলকদ ১৪৪৭ হিজরী রোজ সোমবার আমার ছোট মেয়ে <strong>শিফা ইসলাম দৃষ্টি</strong>-এর শুভ বিবাহের দিন ধার্য করা হইয়াছে。<br><br>
+                    পরম করুণাময় আল্লাহতালা'র অশেষ মেহেরবানিতে আগামী ১ জুন ২০২৬ ইং ১৮ জ্যৈষ্ঠ ১৪৩৩ বাংলা মোতাবেক ২৫ জিলকদ ১৪৪৭ হিজরী রোজ সোমবার আমার ছোট মেয়ে <strong>শিফা ইসলাম দৃষ্টি</strong>-এর শুভ বিবাহের দিন ধার্য করা হইয়াছে।<br><br>
                     উক্ত অনুষ্ঠানে আপনার/আপনাদের উপস্থিতি ও দোয়া একান্তভাবে কামনা করছি।</p>
                 </div>
 
@@ -129,11 +131,62 @@
                 </div>
 
                 <div class="footer-info">
-                    <p><strong>প্রয়োজনে:</strong> 01896270282, 01770876779</p>
-                    <p><strong>দাওয়াতক্রমে:</strong> কনের মাতা ও আত্মীয়-স্বজন।</p>
+                    <p><strong>প্রয়োজনে:</strong> 01896270282, 01770876779</p>
+                    <p><strong>দাওয়াতক্রমে:</strong> কনের মাতা ও আত্মীয়-স্বজন।</p>
                 </div>
-            </div>
-        </section>
+
+                <!-- ── Cartoon characters ── -->
+                <div class="cartoon-section">
+                    <img id="groom-cartoon" class="cartoon groom-cartoon" src="assets/g01.png" alt="Groom" loading="lazy">
+                    <img id="bride-cartoon"  class="cartoon bride-cartoon"  src="assets/b01.png" alt="Bride"  loading="lazy">
+                </div>
+
+                <!-- ── Swipe-to-see-pictures slider ── -->
+                <div class="slide-bar" id="slide-bar">
+                    <div class="slide-bar-track" id="slide-track">
+                        <div class="slide-bar-thumb" id="slide-thumb">
+                            <!-- Arrow icon -->
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                                 stroke="currentColor" stroke-width="2.5"
+                                 stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="5" y1="12" x2="19" y2="12"/>
+                                <polyline points="12 5 19 12 12 19"/>
+                            </svg>
+                        </div>
+                        <span class="slide-bar-label" id="slide-label">slide to see pictures</span>
+                    </div>
+                </div>
+
+            </div><!-- /.details-content -->
+        </section><!-- /#details-page -->
+
+        <!-- ── Gallery Page ── -->
+        <section id="gallery-page" class="gallery-page hidden">
+            <div class="gallery-content">
+
+                <div class="gallery-header">
+                    <div class="ornament"><span class="ornament-diamond"></span></div>
+                    <h2 class="gallery-title">আমাদের মুহূর্ত</h2>
+                    <p class="gallery-subtitle">Our Precious Moments</p>
+                    <div class="ornament"><span class="ornament-diamond"></span></div>
+                </div>
+
+                <!-- Couple photos side-by-side -->
+                <div class="couple-frame">
+                    <img class="couple-photo" src="assets/g02.png" alt="Groom photo" loading="lazy">
+                    <div class="couple-heart">&#9829;</div>
+                    <img class="couple-photo" src="assets/b02.png" alt="Bride photo" loading="lazy">
+                </div>
+
+                <!-- Placeholder for future photos -->
+                <div class="photo-coming-soon">
+                    <span>&#128247;</span>
+                    <p>আরো ছবি শীঘ্রই আসছে…</p>
+                </div>
+
+            </div><!-- /.gallery-content -->
+        </section><!-- /#gallery-page -->
+
     </main>
 
     <script src="app.js" defer></script>

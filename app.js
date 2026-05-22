@@ -161,12 +161,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (!el) return;
                         setTimeout(() => {
                             el.classList.add('animated');
-                            // Fire border beam only on .side and .schedule
                             if (el.matches('.side, .schedule')) {
                                 createBorderBeam(el);
                             }
                         }, 350 + i * 140);
                     });
+
+                    // Init slider after page is rendered (needs layout dimensions)
+                    setTimeout(initSlider, 600);
                 });
             });
         };
@@ -255,13 +257,137 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /* ─────────────────────────────────────────
-       6. Event listeners – passive where possible for instant INP
+       7. Event listeners
     ───────────────────────────────────────── */
     envelopeContainer.addEventListener('click', openEnvelope);
-    // ctaButton click is not passive (we don't call preventDefault but it's fine)
     if (ctaButton) ctaButton.addEventListener('click', flyAwayDetails);
+
+    /* ─────────────────────────────────────────
+       8. Slide-to-see-pictures slider
+       • Drag/touch thumb → groom moves toward bride proportionally
+       • Full slide (≥95%) → gallery page transition
+    ───────────────────────────────────────── */
+    function initSlider() {
+        const thumb   = document.getElementById('slide-thumb');
+        const track   = document.getElementById('slide-track');
+        const label   = document.getElementById('slide-label');
+        const groom   = document.getElementById('groom-cartoon');
+        const bride   = document.getElementById('bride-cartoon');
+        if (!thumb || !track || !groom || !bride) return;
+
+        let isDragging = false;
+        let startClientX = 0;
+        let currentOffset = 0;  // px thumb has moved from start
+
+        function getMaxDrag() {
+            // Available track width minus thumb width and its left margin
+            return track.clientWidth - thumb.offsetWidth - 6;
+        }
+
+        function getGroomTravel() {
+            // Distance groom center needs to move to reach bride
+            const groomRect = groom.getBoundingClientRect();
+            const brideRect = bride.getBoundingClientRect();
+            return Math.max(0, brideRect.left - groomRect.right + 8);
+        }
+
+        function applyProgress(progress) {
+            const maxDrag    = getMaxDrag();
+            const thumbX     = progress * maxDrag;
+            const groomX     = progress * getGroomTravel();
+
+            // Move thumb
+            thumb.style.transform = `translateX(${thumbX}px)`;
+
+            // Move groom cartoon via CSS variable
+            groom.style.setProperty('--groom-x', `${groomX}px`);
+
+            // Fill track
+            const fillPct = progress * 100;
+            track.style.setProperty('--fill-pct', `${fillPct}%`);
+
+            // Fade label as thumb advances
+            if (label) label.style.opacity = String(1 - progress * 1.4);
+        }
+
+        function onStart(e) {
+            isDragging   = true;
+            startClientX = (e.touches ? e.touches[0].clientX : e.clientX) - currentOffset;
+            thumb.style.transition = 'none';
+            groom.style.transition = 'none';
+        }
+
+        function onMove(e) {
+            if (!isDragging) return;
+            const clientX   = e.touches ? e.touches[0].clientX : e.clientX;
+            const rawOffset = clientX - startClientX;
+            const maxDrag   = getMaxDrag();
+            currentOffset   = Math.min(Math.max(0, rawOffset), maxDrag);
+            const progress  = currentOffset / maxDrag;
+            applyProgress(progress);
+
+            if (progress >= 0.95) {
+                isDragging = false;
+                triggerGallery();
+            }
+        }
+
+        function onEnd() {
+            if (!isDragging) return;
+            isDragging = false;
+            const maxDrag  = getMaxDrag();
+            const progress = currentOffset / maxDrag;
+
+            if (progress >= 0.95) {
+                triggerGallery();
+            } else {
+                // Snap back smoothly
+                currentOffset = 0;
+                thumb.style.transition = 'transform 0.4s cubic-bezier(0.25,1,0.5,1)';
+                groom.style.transition = 'transform 0.4s cubic-bezier(0.25,1,0.5,1)';
+                applyProgress(0);
+            }
+        }
+
+        // Mouse
+        thumb.addEventListener('mousedown',  onStart);
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup',   onEnd);
+        // Touch
+        thumb.addEventListener('touchstart', onStart, { passive: true });
+        document.addEventListener('touchmove', onMove, { passive: true });
+        document.addEventListener('touchend',  onEnd);
+    }
+
+    /* ─────────────────────────────────────────
+       9. Gallery transition
+    ───────────────────────────────────────── */
+    function triggerGallery() {
+        const detailsPage = document.getElementById('details-page');
+        const galleryPage = document.getElementById('gallery-page');
+        if (!galleryPage) return;
+
+        // Fade out details page
+        if (detailsPage) {
+            detailsPage.style.transition = 'opacity 0.6s ease';
+            detailsPage.style.opacity    = '0';
+            setTimeout(() => detailsPage.classList.add('hidden'), 650);
+        }
+
+        // Show gallery
+        galleryPage.classList.remove('hidden');
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                galleryPage.classList.add('visible');
+            });
+        });
+    }
 
     /* ── Boot ── */
     preloadImages();
     initializeCountdown();
+
+    // Slider is initialized after details page is shown
+    // (called from flyAwayDetails once page is visible)
 });
+
