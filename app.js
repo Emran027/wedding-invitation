@@ -151,7 +151,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 requestAnimationFrame(() => {
                     detailsPage.classList.add('visible');
 
-                    // Staggered box animations
+                    // Staggered box animations + one-shot border beam
                     const boxes = [
                         ...detailsPage.querySelectorAll('.side'),
                         detailsPage.querySelector('.schedule'),
@@ -159,7 +159,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     ];
                     boxes.forEach((el, i) => {
                         if (!el) return;
-                        setTimeout(() => el.classList.add('animated'), 350 + i * 140);
+                        setTimeout(() => {
+                            el.classList.add('animated');
+                            // Fire border beam only on .side and .schedule
+                            if (el.matches('.side, .schedule')) {
+                                createBorderBeam(el);
+                            }
+                        }, 350 + i * 140);
                     });
                 });
             });
@@ -174,7 +180,42 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /* ─────────────────────────────────────────
-       5. Countdown timer (rAF loop – no setInterval drift)
+       5. Border beam: one-shot golden light traveling the perimeter
+       Uses CSS offset-path with a dynamically computed SVG rounded-rect path
+    ───────────────────────────────────────── */
+    function createBorderBeam(el) {
+        // Read live dimensions after the element is in the DOM
+        const rect   = el.getBoundingClientRect();
+        const w      = rect.width;
+        const h      = rect.height;
+        const r      = 16; // matches border-radius in CSS
+
+        // SVG rounded-rectangle path (clockwise from top-left arc)
+        const path =
+            `M ${r},0 ` +
+            `H ${w - r} Q ${w},0 ${w},${r} ` +
+            `V ${h - r} Q ${w},${h} ${w - r},${h} ` +
+            `H ${r} Q 0,${h} 0,${h - r} ` +
+            `V ${r} Q 0,0 ${r},0 Z`;
+
+        // Build elements
+        const beam = document.createElement('div');
+        beam.className = 'border-beam';
+
+        const dot = document.createElement('div');
+        dot.className = 'border-beam-dot';
+        dot.style.offsetPath = `path("${path}")`;
+
+        beam.appendChild(dot);
+        el.appendChild(beam);
+
+        // Self-clean after animation ends (1.6s + small buffer)
+        dot.addEventListener('animationend', () => beam.remove(), { once: true });
+    }
+
+
+    /* ─────────────────────────────────────────
+       6. Countdown timer (rAF loop – no setInterval drift)
     ───────────────────────────────────────── */
     function initializeCountdown() {
         const targetDate = new Date('2026-06-01T00:00:00+06:00').getTime();
