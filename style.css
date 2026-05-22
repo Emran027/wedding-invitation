@@ -650,6 +650,17 @@ body {
     box-shadow: 0 0 6px rgba(201, 169, 110, 0.6);
 }
 
+/* ── @property: enables smooth conic-gradient angle animation ── */
+@property --glow-angle {
+    syntax: '<angle>';
+    initial-value: 0deg;
+    inherits: false;
+}
+
+@keyframes glow-border-spin {
+    to { --glow-angle: 360deg; }
+}
+
 /* ── Staggered box appear animation ── */
 @keyframes boxSlideUp {
     0%   { opacity: 0; transform: translateY(28px) scale(0.96); }
@@ -696,21 +707,74 @@ body {
 }
 
 .side {
-    background: linear-gradient(145deg,
-        rgba(255, 255, 255, 0.38),
-        rgba(255, 255, 255, 0.15)
-    );
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    padding: 1.1rem 1.2rem;
-    border-radius: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.55);
-    border-top: 1.5px solid rgba(255, 255, 255, 0.85);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8);
     position: relative;
+    overflow: hidden;          /* clips the spinning beam to the box boundary */
+    border-radius: 16px;
+    border: none;              /* border rendered by ::before glow ring */
+    padding: 1.1rem 1.2rem;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+    --glow-angle: 0deg;
     /* Initial hidden state for animation */
     opacity: 0;
     transform: translateY(28px) scale(0.96);
+    transition: box-shadow 0.4s ease;
+}
+
+/* Rotating golden beam — behind the glass mask */
+.side::before {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 250%; height: 250%;
+    transform: translate(-50%, -50%);
+    background: conic-gradient(
+        from var(--glow-angle),
+        transparent 0deg,
+        transparent 65deg,
+        rgba(201, 169, 110, 0.5) 80deg,
+        rgba(255, 240, 140, 1)   100deg,
+        rgba(255, 255, 200, 1)   115deg,
+        rgba(255, 240, 140, 1)   130deg,
+        rgba(201, 169, 110, 0.5) 145deg,
+        transparent 160deg,
+        transparent 360deg
+    );
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    animation: glow-border-spin 2.8s linear infinite paused;
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* Glass inner mask — covers center, leaving ~2px glowing ring */
+.side::after {
+    content: '';
+    position: absolute;
+    inset: 2px;
+    border-radius: 14px;
+    background: linear-gradient(145deg, rgba(255,255,255,0.38), rgba(255,255,255,0.18));
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: none;
+    z-index: 1;
+    pointer-events: none;
+}
+
+/* Lift all content above both pseudo-elements */
+.side > * {
+    position: relative;
+    z-index: 2;
+}
+
+/* Hover/touch: start spinning and show glow */
+.side:hover::before,
+.side:active::before {
+    opacity: 1;
+    animation-play-state: running;
+}
+
+.side:hover {
+    box-shadow: 0 12px 32px rgba(201, 169, 110, 0.25), 0 4px 12px rgba(0,0,0,0.08);
 }
 
 .side-badge {
@@ -747,22 +811,71 @@ body {
 
 /* ── Schedule ── */
 .schedule {
-    background: linear-gradient(145deg,
-        rgba(255, 255, 255, 0.38),
-        rgba(255, 255, 255, 0.15)
-    );
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    padding: 1rem 1.5rem;
+    position: relative;
+    overflow: hidden;
     border-radius: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.55);
-    border-top: 1.5px solid rgba(255, 255, 255, 0.85);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    border: none;
+    padding: 1rem 1.5rem;
     margin-bottom: 0.9rem;
     text-align: center;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+    --glow-angle: 0deg;
     /* Initial hidden state for animation */
     opacity: 0;
     transform: translateY(28px) scale(0.96);
+    transition: box-shadow 0.4s ease;
+}
+
+.schedule::before {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 250%; height: 250%;
+    transform: translate(-50%, -50%);
+    background: conic-gradient(
+        from var(--glow-angle),
+        transparent 0deg,
+        transparent 65deg,
+        rgba(201, 169, 110, 0.5) 80deg,
+        rgba(255, 240, 140, 1)   100deg,
+        rgba(255, 255, 200, 1)   115deg,
+        rgba(255, 240, 140, 1)   130deg,
+        rgba(201, 169, 110, 0.5) 145deg,
+        transparent 160deg,
+        transparent 360deg
+    );
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    animation: glow-border-spin 2.8s linear infinite paused;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.schedule::after {
+    content: '';
+    position: absolute;
+    inset: 2px;
+    border-radius: 14px;
+    background: linear-gradient(145deg, rgba(255,255,255,0.38), rgba(255,255,255,0.18));
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    z-index: 1;
+    pointer-events: none;
+}
+
+.schedule > * {
+    position: relative;
+    z-index: 2;
+}
+
+.schedule:hover::before,
+.schedule:active::before {
+    opacity: 1;
+    animation-play-state: running;
+}
+
+.schedule:hover {
+    box-shadow: 0 12px 32px rgba(201, 169, 110, 0.25), 0 4px 12px rgba(0,0,0,0.08);
 }
 
 .schedule-title {
