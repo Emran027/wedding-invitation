@@ -246,11 +246,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (currentFireworksCleanup) {
             currentFireworksCleanup();
         }
-
-        fireworkAudio.currentTime = 0;
-        fireworkAudio.play().catch(err => {
-            console.log('Audio play blocked:', err);
-        });
+        // Audio is played directly in gesture handler (onMove/onEnd) to satisfy mobile autoplay policy
+        // This function handles VISUAL only
 
         const canvas = document.createElement('canvas');
         canvas.style.position = 'fixed';
@@ -397,6 +394,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Alias: called from showGallery (audio already playing from gesture handler)
+    const triggerFireworksVisual = triggerFireworks;
 
     /* ─────────────────────────────────────────
        6. Countdown timer (rAF loop – no setInterval drift)
@@ -517,6 +516,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (progress >= 0.98) {
                 isDragging = false;
                 applyProgress(1); // snap to exactly 100%
+                // Play audio HERE — still inside the touch gesture, before any timeout
+                fireworkAudio.currentTime = 0;
+                fireworkAudio.play().catch(() => {});
                 setTimeout(triggerGallery, 150);
             }
         }
@@ -528,6 +530,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (progress >= 0.95) {
                 applyProgress(1);
+                // Play audio HERE — still inside the touchend gesture, before any timeout
+                fireworkAudio.currentTime = 0;
+                fireworkAudio.play().catch(() => {});
                 setTimeout(triggerGallery, 150);
             } else {
                 // Snap back
@@ -563,7 +568,7 @@ document.addEventListener('DOMContentLoaded', () => {
             requestAnimationFrame(() => {
                 requestAnimationFrame(() => {
                     galleryPage.classList.add('visible');
-                    triggerFireworks(); // Fireworks play when entering gallery page
+                    triggerFireworksVisual(); // Visual only — audio already started in gesture
                 });
             });
         };
