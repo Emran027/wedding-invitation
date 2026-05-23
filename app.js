@@ -23,6 +23,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let isAnimating = false;
     let isOpen      = false;
 
+    // Slider offset – lifted to outer scope so backToDetails() can reset it
+    let sliderCurrentOffset = 0;
+
     /* ─────────────────────────────────────────
        1. Image preloading
        Uses decode() so frames are GPU-ready before swap → no jank
@@ -277,7 +280,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let isDragging   = false;
         let startClientX = 0;
-        let currentOffset = 0;
+        // NOTE: sliderCurrentOffset lives in outer scope for cross-function reset
 
         // Cached once at drag start – prevents shrinking-distance bug
         let cachedMaxDrag    = 0;
@@ -300,7 +303,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         function applyProgress(progress) {
             const thumbX  = progress * cachedMaxDrag;
-            
+
             // Groom moves right by half the gap, Bride moves left by half the gap
             const groomX  = progress * (cachedGroomTravel / 2);
             const brideX  = -progress * (cachedGroomTravel / 2);
@@ -315,8 +318,9 @@ document.addEventListener('DOMContentLoaded', () => {
         function onStart(e) {
             measureOnce(); // snapshot dimensions BEFORE any movement
             isDragging   = true;
-            startClientX = (e.touches ? e.touches[0].clientX : e.clientX) - currentOffset;
-            
+            // Use outer-scope sliderCurrentOffset so it's always in sync
+            startClientX = (e.touches ? e.touches[0].clientX : e.clientX) - sliderCurrentOffset;
+
             // Kill any transition so movement is instant
             thumb.style.transition = 'none';
             groom.style.transition = 'none';
@@ -327,8 +331,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!isDragging) return;
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
             const raw     = clientX - startClientX;
-            currentOffset = Math.min(Math.max(0, raw), cachedMaxDrag);
-            const progress = currentOffset / cachedMaxDrag;
+            sliderCurrentOffset = Math.min(Math.max(0, raw), cachedMaxDrag);
+            const progress = sliderCurrentOffset / cachedMaxDrag;
             applyProgress(progress);
 
             if (progress >= 0.98) {
@@ -341,14 +345,14 @@ document.addEventListener('DOMContentLoaded', () => {
         function onEnd() {
             if (!isDragging) return;
             isDragging = false;
-            const progress = currentOffset / cachedMaxDrag;
+            const progress = sliderCurrentOffset / cachedMaxDrag;
 
             if (progress >= 0.95) {
                 applyProgress(1);
                 setTimeout(triggerGallery, 150);
             } else {
                 // Snap back
-                currentOffset = 0;
+                sliderCurrentOffset = 0;
                 thumb.style.transition = 'transform 0.4s cubic-bezier(0.25,1,0.5,1)';
                 groom.style.transition = 'transform 0.4s cubic-bezier(0.25,1,0.5,1)';
                 bride.style.transition = 'transform 0.4s cubic-bezier(0.25,1,0.5,1)';
@@ -374,51 +378,76 @@ document.addEventListener('DOMContentLoaded', () => {
         const galleryPage = document.getElementById('gallery-page');
         if (!galleryPage) return;
 
+        // First fade OUT details page, then show gallery (no overlap)
+        const showGallery = () => {
+            galleryPage.classList.remove('hidden');
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    galleryPage.classList.add('visible');
+                });
+            });
+        };
+
+        if (detailsPage && !detailsPage.classList.contains('hidden')) {
+            detailsPage.style.transition = 'opacity 0.5s ease';
+            detailsPage.style.opacity    = '0';
+            setTimeout(() => {
+                detailsPage.classList.add('hidden');
+                detailsPage.classList.remove('visible');
+                detailsPage.style.opacity    = '';
+                detailsPage.style.transition = '';
+                showGallery(); // Show gallery only after details is fully gone
+            }, 520);
+        } else {
+            showGallery();
+        }
+    }
+
+    function backToEnvelope() {
+        const detailsPage = document.getElementById('details-page');
+
         // Fade out details page
         if (detailsPage) {
             detailsPage.style.transition = 'opacity 0.6s ease';
             detailsPage.style.opacity    = '0';
             setTimeout(() => {
                 detailsPage.classList.add('hidden');
-                detailsPage.style.opacity = '';
-                detailsPage.style.transition = '';
-            }, 650);
-        }
-
-        // Show gallery
-        galleryPage.classList.remove('hidden');
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                galleryPage.classList.add('visible');
-            });
-        });
-    }
-
-    function backToEnvelope() {
-        const detailsPage = document.getElementById('details-page');
-        if (detailsPage) {
-            detailsPage.style.transition = 'opacity 0.6s ease';
-            detailsPage.style.opacity    = '0';
-            setTimeout(() => {
-                detailsPage.classList.add('hidden');
                 detailsPage.classList.remove('visible');
-                detailsPage.style.opacity = '';
+                detailsPage.style.opacity    = '';
                 detailsPage.style.transition = '';
             }, 600);
         }
 
-        // Bring back envelope container
-        envelopeContainer.classList.remove('fly-away');
-        if (ambientBg) ambientBg.classList.add('blurred');
-        
-        // Show Details Button again
-        if (invitationDetails) {
-            invitationDetails.classList.remove('hidden');
-            requestAnimationFrame(() => {
-                invitationDetails.style.transition = 'opacity 0.6s ease';
-                invitationDetails.style.opacity    = '1';
-            });
-        }
+        // Full envelope reset — user must re-open from scratch
+        setTimeout(() => {
+            // 1. Hide composed (open) envelope, show frame img again
+            envelopeComposed.classList.add('hidden');
+            envelopeComposed.classList.remove('open');
+            envelopeImg.src = decodedFrames[0]?.src ?? 'assets/1.png';
+            envelopeImg.style.visibility = 'visible';
+
+            // 2. Reset container classes & position
+            envelopeContainer.classList.remove('fly-away', 'moved-up', 'animating');
+
+            // 3. Reset state flags
+            isAnimating = false;
+            isOpen      = false;
+
+            // 4. Restore header
+            if (headerTitle)    { headerTitle.style.opacity = ''; headerTitle.style.transition = ''; }
+            if (headerSubtitle) { headerSubtitle.style.opacity = ''; headerSubtitle.style.transition = ''; }
+
+            // 5. Hide details button
+            if (invitationDetails) {
+                invitationDetails.classList.add('hidden');
+                invitationDetails.classList.remove('visible');
+                invitationDetails.style.opacity    = '';
+                invitationDetails.style.transition = '';
+            }
+
+            // 6. Remove blur from background
+            if (ambientBg) ambientBg.classList.remove('blurred');
+        }, 650);
     }
 
     function backToDetails() {
@@ -444,7 +473,10 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        // Reset slider elements
+        // Reset slider offset in outer scope — prevents instant-trigger on next touch
+        sliderCurrentOffset = 0;
+
+        // Reset slider visual elements
         const thumb = document.getElementById('slide-thumb');
         const groom = document.getElementById('groom-cartoon');
         const bride = document.getElementById('bride-cartoon');
