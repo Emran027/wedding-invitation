@@ -30,6 +30,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const fireworkAudio = new Audio('assets/firework.mp3');
     fireworkAudio.preload = 'auto';
     let currentFireworksCleanup = null;
+    let audioUnlocked = false;
+
+    // Mobile browsers block autoplay unless audio is first triggered inside a user gesture.
+    // We play + immediately pause on first touch anywhere — this "unlocks" the audio context.
+    function unlockAudio() {
+        if (audioUnlocked) return;
+        audioUnlocked = true;
+        fireworkAudio.play().then(() => {
+            fireworkAudio.pause();
+            fireworkAudio.currentTime = 0;
+        }).catch(() => {});
+        document.removeEventListener('touchstart', unlockAudio);
+        document.removeEventListener('mousedown',  unlockAudio);
+    }
+    document.addEventListener('touchstart', unlockAudio, { passive: true });
+    document.addEventListener('mousedown',  unlockAudio, { passive: true });
 
     /* ─────────────────────────────────────────
        1. Image preloading
