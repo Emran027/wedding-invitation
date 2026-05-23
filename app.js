@@ -26,26 +26,45 @@ document.addEventListener('DOMContentLoaded', () => {
     // Slider offset – lifted to outer scope so backToDetails() can reset it
     let sliderCurrentOffset = 0;
 
-    // Firework audio and cleanup state
-    const fireworkAudio = new Audio('assets/firework.mp3');
-    fireworkAudio.preload = 'auto';
+    // Web Audio API for more reliable mobile playback
+    let audioCtx = null;
+    let audioBuffer = null;
+    let currentAudioSource = null;
     let currentFireworksCleanup = null;
     let audioUnlocked = false;
 
-    // Mobile browsers block autoplay unless audio is first triggered inside a user gesture.
-    // We play + immediately pause on first touch anywhere — this "unlocks" the audio context.
+    function initAudio() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            fetch('assets/firework.mp3')
+                .then(res => res.arrayBuffer())
+                .then(buf => audioCtx.decodeAudioData(buf))
+                .then(decoded => { audioBuffer = decoded; })
+                .catch(e => console.error("Audio decode error:", e));
+        }
+    }
+
     function unlockAudio() {
         if (audioUnlocked) return;
         audioUnlocked = true;
-        fireworkAudio.play().then(() => {
-            fireworkAudio.pause();
-            fireworkAudio.currentTime = 0;
-        }).catch(() => {});
+        initAudio();
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+        // Play silent buffer to unlock iOS Safari
+        const buffer = audioCtx.createBuffer(1, 1, 22050);
+        const source = audioCtx.createBufferSource();
+        source.buffer = buffer;
+        source.connect(audioCtx.destination);
+        source.start(0);
+
         document.removeEventListener('touchstart', unlockAudio);
         document.removeEventListener('mousedown',  unlockAudio);
+        document.removeEventListener('touchend',   unlockAudio);
     }
     document.addEventListener('touchstart', unlockAudio, { passive: true });
     document.addEventListener('mousedown',  unlockAudio, { passive: true });
+    document.addEventListener('touchend',   unlockAudio, { passive: true });
 
     /* ─────────────────────────────────────────
        1. Image preloading
@@ -386,10 +405,27 @@ document.addEventListener('DOMContentLoaded', () => {
         requestAnimationFrame(animate);
     }
 
-    function stopFireworkAudio() {
-        fireworkAudio.pause();
-        fireworkAudio.currentTime = 0;
-        if (currentFireworksCleanup) {
+    function playFireworkAudio() {
+        if (!audioCtx || !audioBuffer) return;
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+        stopFireworkAudio(false); // Stop any currently playing audio, but don't clear visual
+        currentAudioSource = audioCtx.createBufferSource();
+        currentAudioSource.buffer = audioBuffer;
+        currentAudioSource.connect(audioCtx.destination);
+        currentAudioSource.start(0);
+    }
+
+    function stopFireworkAudio(stopVisual = true) {
+        if (currentAudioSource) {
+            try {
+                currentAudioSource.stop();
+                currentAudioSource.disconnect();
+            } catch (e) {}
+            currentAudioSource = null;
+        }
+        if (stopVisual && currentFireworksCleanup) {
             currentFireworksCleanup();
         }
     }
@@ -517,8 +553,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 isDragging = false;
                 applyProgress(1); // snap to exactly 100%
                 // Play audio HERE — still inside the touch gesture, before any timeout
-                fireworkAudio.currentTime = 0;
-                fireworkAudio.play().catch(() => {});
+                playFireworkAudio();
                 setTimeout(triggerGallery, 150);
             }
         }
@@ -531,8 +566,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (progress >= 0.95) {
                 applyProgress(1);
                 // Play audio HERE — still inside the touchend gesture, before any timeout
-                fireworkAudio.currentTime = 0;
-                fireworkAudio.play().catch(() => {});
+                playFireworkAudio();
                 setTimeout(triggerGallery, 150);
             } else {
                 // Snap back
