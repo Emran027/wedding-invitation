@@ -454,7 +454,12 @@ document.addEventListener('DOMContentLoaded', () => {
     /* ─────────────────────────────────────────
        7. Event listeners
     ───────────────────────────────────────── */
-    envelopeContainer.addEventListener('click', openEnvelope);
+    envelopeContainer.addEventListener('click', () => {
+        // Hide tap hint on first interaction
+        const tapHint = document.getElementById('tap-hint');
+        if (tapHint) tapHint.classList.add('hide');
+        openEnvelope();
+    });
     if (ctaButton) ctaButton.addEventListener('click', flyAwayDetails);
 
     /* ─────────────────────────────────────────

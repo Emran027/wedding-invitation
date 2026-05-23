@@ -41,7 +41,12 @@
                 <img id="envelope-img" class="envelope-img" src="assets/1.png" alt="Wedding Envelope"
                      width="450" height="525" fetchpriority="high" decoding="async">
 
-                <!-- Final Composed State using top.png and body.png -->
+                <!-- Tap hint indicator — fades out after first interaction -->
+                <div id="tap-hint" class="tap-hint">
+                    <div class="tap-ripple"></div>
+                    <div class="tap-ripple tap-ripple-2"></div>
+                    <div class="tap-finger">👆</div>
+                </div>
                 <div id="envelope-composed" class="envelope-composed hidden">
                     <!-- Flap background -->
                     <img class="envelope-layer flap" src="assets/top.png" alt="Envelope Flap" width="450" height="525" decoding="async" loading="lazy">
