@@ -26,6 +26,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Slider offset – lifted to outer scope so backToDetails() can reset it
     let sliderCurrentOffset = 0;
 
+    // Firework audio and cleanup state
+    const fireworkAudio = new Audio('assets/firework.mp3');
+    fireworkAudio.preload = 'auto';
+    let currentFireworksCleanup = null;
+
     /* ─────────────────────────────────────────
        1. Image preloading
        Uses decode() so frames are GPU-ready before swap → no jank
@@ -218,6 +223,164 @@ document.addEventListener('DOMContentLoaded', () => {
         dot.addEventListener('animationend', () => beam.remove(), { once: true });
     }
 
+    /* ─────────────────────────────────────────
+       5b. Fireworks & Audio Effects
+    ───────────────────────────────────────── */
+    function triggerFireworks() {
+        if (currentFireworksCleanup) {
+            currentFireworksCleanup();
+        }
+
+        fireworkAudio.currentTime = 0;
+        fireworkAudio.play().catch(err => {
+            console.log('Audio play blocked:', err);
+        });
+
+        const canvas = document.createElement('canvas');
+        canvas.style.position = 'fixed';
+        canvas.style.top = '0';
+        canvas.style.left = '0';
+        canvas.style.width = '100%';
+        canvas.style.height = '100%';
+        canvas.style.pointerEvents = 'none';
+        canvas.style.zIndex = '9999';
+        document.body.appendChild(canvas);
+
+        const ctx = canvas.getContext('2d');
+        let width = canvas.width = window.innerWidth;
+        let height = canvas.height = window.innerHeight;
+
+        const handleResize = () => {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        };
+        window.addEventListener('resize', handleResize);
+
+        let particles = [];
+        let active = true;
+
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 6 + 1.5;
+                this.vx = Math.cos(angle) * speed;
+                this.vy = Math.sin(angle) * speed;
+                this.gravity = 0.06;
+                this.resistance = 0.95;
+                this.alpha = 1;
+                this.decay = Math.random() * 0.015 + 0.008;
+                this.size = Math.random() * 2 + 1.2;
+                this.trail = [];
+                this.maxTrailLength = 5;
+            }
+            update() {
+                this.trail.push({ x: this.x, y: this.y });
+                if (this.trail.length > this.maxTrailLength) {
+                    this.trail.shift();
+                }
+                this.vx *= this.resistance;
+                this.vy *= this.resistance;
+                this.vy += this.gravity;
+                this.x += this.vx;
+                this.y += this.vy;
+                this.alpha -= this.decay;
+            }
+            draw(ctx) {
+                if (this.alpha <= 0) return;
+                ctx.save();
+                ctx.globalAlpha = this.alpha;
+                
+                if (this.trail.length > 1) {
+                    ctx.beginPath();
+                    ctx.moveTo(this.trail[0].x, this.trail[0].y);
+                    for (let i = 1; i < this.trail.length; i++) {
+                        ctx.lineTo(this.trail[i].x, this.trail[i].y);
+                    }
+                    ctx.strokeStyle = this.color;
+                    ctx.lineWidth = this.size * 0.65;
+                    ctx.lineCap = 'round';
+                    ctx.stroke();
+                }
+                
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.shadowBlur = 6;
+                ctx.shadowColor = this.color;
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        const colors = [
+            '#ff3b30', '#ff9500', '#ffcc00', '#4cd964', '#5ac8fa', '#007aff', '#5856d6', '#ff2d55', 
+            '#ffd700', '#ff69b4', '#00ffff', '#ff00ff', '#e0aaff', '#c8b6ff', '#b8c0ff'
+        ];
+
+        function createBurst(x, y) {
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            const pCount = 75;
+            for (let i = 0; i < pCount; i++) {
+                particles.push(new Particle(x, y, color));
+            }
+        }
+
+        let burstCount = 0;
+        const maxBursts = 8;
+        const triggerNextBurst = () => {
+            if (!active || burstCount >= maxBursts) return;
+            const x = Math.random() * (width * 0.7) + (width * 0.15);
+            const y = Math.random() * (height * 0.45) + (height * 0.1);
+            createBurst(x, y);
+            burstCount++;
+            setTimeout(triggerNextBurst, Math.random() * 250 + 250);
+        };
+
+        triggerNextBurst();
+
+        const animate = () => {
+            if (!active) return;
+            ctx.clearRect(0, 0, width, height);
+            particles = particles.filter(p => p.alpha > 0);
+            particles.forEach(p => {
+                p.update();
+                p.draw(ctx);
+            });
+
+            if (particles.length > 0 || burstCount < maxBursts) {
+                requestAnimationFrame(animate);
+            } else {
+                cleanup();
+            }
+        };
+
+        const cleanup = () => {
+            if (!active) return;
+            active = false;
+            window.removeEventListener('resize', handleResize);
+            if (canvas.parentNode) {
+                canvas.parentNode.removeChild(canvas);
+            }
+            if (currentFireworksCleanup === cleanup) {
+                currentFireworksCleanup = null;
+            }
+        };
+
+        currentFireworksCleanup = cleanup;
+        requestAnimationFrame(animate);
+    }
+
+    function stopFireworkAudio() {
+        fireworkAudio.pause();
+        fireworkAudio.currentTime = 0;
+        if (currentFireworksCleanup) {
+            currentFireworksCleanup();
+        }
+    }
+
 
     /* ─────────────────────────────────────────
        6. Countdown timer (rAF loop – no setInterval drift)
@@ -384,6 +547,7 @@ document.addEventListener('DOMContentLoaded', () => {
             requestAnimationFrame(() => {
                 requestAnimationFrame(() => {
                     galleryPage.classList.add('visible');
+                    triggerFireworks(); // Fireworks play when entering gallery page
                 });
             });
         };
@@ -405,6 +569,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function backToEnvelope() {
         const detailsPage = document.getElementById('details-page');
+
+        stopFireworkAudio(); // Stop fireworks when going back to envelope
 
         // Fade out details page
         if (detailsPage) {
