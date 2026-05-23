@@ -26,37 +26,21 @@ document.addEventListener('DOMContentLoaded', () => {
     // Slider offset – lifted to outer scope so backToDetails() can reset it
     let sliderCurrentOffset = 0;
 
-    // Web Audio API for more reliable mobile playback
-    let audioCtx = null;
-    let audioBuffer = null;
-    let currentAudioSource = null;
     let currentFireworksCleanup = null;
     let audioUnlocked = false;
 
-    function initAudio() {
-        if (!audioCtx) {
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            fetch('assets/firework.mp3')
-                .then(res => res.arrayBuffer())
-                .then(buf => audioCtx.decodeAudioData(buf))
-                .then(decoded => { audioBuffer = decoded; })
-                .catch(e => console.error("Audio decode error:", e));
-        }
-    }
-
+    // Mobile browsers block autoplay unless audio is first triggered inside a user gesture.
     function unlockAudio() {
         if (audioUnlocked) return;
         audioUnlocked = true;
-        initAudio();
-        if (audioCtx.state === 'suspended') {
-            audioCtx.resume();
+        
+        const fireworkAudio = document.getElementById('wedding-music');
+        if (fireworkAudio) {
+            fireworkAudio.play().then(() => {
+                fireworkAudio.pause();
+                fireworkAudio.currentTime = 0;
+            }).catch(() => {});
         }
-        // Play silent buffer to unlock iOS Safari
-        const buffer = audioCtx.createBuffer(1, 1, 22050);
-        const source = audioCtx.createBufferSource();
-        source.buffer = buffer;
-        source.connect(audioCtx.destination);
-        source.start(0);
 
         document.removeEventListener('touchstart', unlockAudio);
         document.removeEventListener('mousedown',  unlockAudio);
@@ -406,24 +390,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function playFireworkAudio() {
-        if (!audioCtx || !audioBuffer) return;
-        if (audioCtx.state === 'suspended') {
-            audioCtx.resume();
+        const fireworkAudio = document.getElementById('wedding-music');
+        if (fireworkAudio) {
+            fireworkAudio.currentTime = 0;
+            fireworkAudio.play().catch(() => {});
         }
-        stopFireworkAudio(false); // Stop any currently playing audio, but don't clear visual
-        currentAudioSource = audioCtx.createBufferSource();
-        currentAudioSource.buffer = audioBuffer;
-        currentAudioSource.connect(audioCtx.destination);
-        currentAudioSource.start(0);
     }
 
     function stopFireworkAudio(stopVisual = true) {
-        if (currentAudioSource) {
-            try {
-                currentAudioSource.stop();
-                currentAudioSource.disconnect();
-            } catch (e) {}
-            currentAudioSource = null;
+        const fireworkAudio = document.getElementById('wedding-music');
+        if (fireworkAudio) {
+            fireworkAudio.pause();
+            fireworkAudio.currentTime = 0;
         }
         if (stopVisual && currentFireworksCleanup) {
             currentFireworksCleanup();
