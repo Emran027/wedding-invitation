@@ -8,7 +8,7 @@
  */
 document.addEventListener('DOMContentLoaded', () => {
     const TOTAL_FRAMES   = 8;
-    const FRAME_DURATION = 80; // ms per frame
+    const FRAME_DURATION = 65; // ms per frame — smoother on 60fps displays
 
     /* ── Cached DOM refs (single query each) ── */
     const envelopeImg      = document.getElementById('envelope-img');
@@ -19,9 +19,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const invitationDetails= document.getElementById('invitation-details');
     const ctaButton        = document.querySelector('.cta-button');
     const ambientBg        = document.querySelector('.ambient-background');
+    const tapHint          = document.getElementById('tap-hint');
 
     let isAnimating = false;
     let isOpen      = false;
+    let pendingOpen = false; // user tapped before preload finished
 
     // Slider offset – lifted to outer scope so backToDetails() can reset it
     let sliderCurrentOffset = 0;
@@ -66,14 +68,18 @@ document.addEventListener('DOMContentLoaded', () => {
         allSrcs.forEach((src, idx) => {
             const img = new Image();
             img.src   = src;
-            // decode() resolves when GPU texture is ready
             img.decode()
-                .catch(() => {}) // silently ignore missing assets
+                .catch(() => {})
                 .finally(() => {
                     if (idx < TOTAL_FRAMES) decodedFrames[idx] = img;
                     loaded++;
                     if (loaded === allSrcs.length) {
                         envelopeContainer.style.cursor = 'pointer';
+                        // If user tapped while images were loading, open now
+                        if (pendingOpen) {
+                            pendingOpen = false;
+                            openEnvelope();
+                        }
                     }
                 });
         });
@@ -88,12 +94,19 @@ document.addEventListener('DOMContentLoaded', () => {
     ───────────────────────────────────────── */
     function openEnvelope() {
         if (isAnimating || isOpen) return;
+
+        // If frames not yet ready, queue and return
+        if (!decodedFrames[0]) {
+            pendingOpen = true;
+            return;
+        }
+
         isAnimating = true;
         envelopeContainer.classList.add('animating');
 
-        // Fade header out with CSS transition (no style recalc in loop)
-        if (headerTitle)    headerTitle.style.cssText    += ';transition:opacity .5s ease;opacity:0';
-        if (headerSubtitle) headerSubtitle.style.cssText += ';transition:opacity .5s ease;opacity:0';
+        // Fade header out with CSS transition
+        if (headerTitle)    headerTitle.style.cssText    += ';transition:opacity .4s ease;opacity:0';
+        if (headerSubtitle) headerSubtitle.style.cssText += ';transition:opacity .4s ease;opacity:0';
 
         let currentFrame = 1;
         let lastTime     = 0;
@@ -456,7 +469,6 @@ document.addEventListener('DOMContentLoaded', () => {
     ───────────────────────────────────────── */
     envelopeContainer.addEventListener('click', () => {
         // Hide tap hint on first interaction
-        const tapHint = document.getElementById('tap-hint');
         if (tapHint) tapHint.classList.add('hide');
         openEnvelope();
     });
@@ -651,6 +663,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // 6. Remove blur from background
             if (ambientBg) ambientBg.classList.remove('blurred');
+
+            // 7. Re-show tap hint so user knows to tap again
+            if (tapHint) {
+                tapHint.classList.remove('hide');
+            }
         }, 650);
     }
 
